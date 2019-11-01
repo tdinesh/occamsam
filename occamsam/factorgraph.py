@@ -117,7 +117,9 @@ class ObservationFactor(LinearFactor):
 class GaussianFactorGraph(object):
 
     def __init__(self):
+
         self.graph = nx.DiGraph()
+        self.margin_window = None
 
     def add_factor(self, factor):
 
@@ -130,15 +132,17 @@ class GaussianFactorGraph(object):
 
         self.graph.add_edge(factor.var2, factor.var1, factor=factor)
 
-    def model_array(self):
-        return np.concatenate([np.array(f.b) for (u, v, f) in self.graph.edges.data('factor')])
-
-    # def model_matrix(self):
-    #     A = sp.sparse.lil_matrix()
-
     def observation_matrix(self):
 
-        observations = [(u, v, f) for (u, v, f) in self.graph.edges.data('factor') if isinstance(f, ObservationFactor)]
+        nodelist = [] + []
+        edgelist = list(self.graph.edges())
+
+
+    def observation_array(self):
+        return np.concatenate([np.array(f.b) for (u, v, f) in self.graph.edges.data('factor') if isinstance(f, ObservationFactor)])
+
+    def odometry_array(self):
+        return np.concatenate([np.array(f.b) for (u, v, f) in self.graph.edges.data('factor') if isinstance(f, OdometryFactor)])
 
     def draw(self):
 
