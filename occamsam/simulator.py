@@ -32,7 +32,7 @@ class Simulator(object):
 
         lids, pids = np.meshgrid(np.arange(self.num_landmarks), np.arange(self.num_points))
         lids, pids = np.ravel(lids), np.ravel(pids)
-        rids = np.random.choice(self.num_points * self.num_landmarks, self.num_observations, replace=False)
+        rids = np.sort(np.random.choice(self.num_points * self.num_landmarks, self.num_observations, replace=False))
         self.observation_pairs = list(zip(pids[rids].tolist(), lids[rids].tolist()))
 
     def odometry_factors(self):
@@ -43,7 +43,8 @@ class Simulator(object):
         else:
             rs = [np.array([1.]) for _ in self.odometry_pairs]
 
-        ts = [np.dot(rs[i].T, self.points[v, :] - self.points[u, :]) for i, (u, v) in enumerate(self.odometry_pairs)]
+        ts = [np.dot(rs[i].T, self.points[v, :] - self.points[u, :])
+              for i, (u, v) in enumerate(self.odometry_pairs)]
 
         return self.odometry_pairs, rs, ts
 
@@ -51,7 +52,9 @@ class Simulator(object):
     def observation_factors(self):
 
         hs = [self.landmark_orientation[v] for _, v in self.observation_pairs]
-        ds = [self.landmarks[v, :] - np.dot(self.landmark_orientation[v], self.points[u, :]) for (u, v) in self.observation_pairs]
+
+        ds = [self.landmarks[v, :] - np.dot(self.landmark_orientation[v], self.points[u, :])
+              for (u, v) in self.observation_pairs]
 
         return self.observation_pairs, hs, ds
 
