@@ -18,7 +18,6 @@ class Variable(object):
         self.position = None
         self.dim = dim
 
-
 class PointVariable(Variable):
 
     def __init__(self, dim):
@@ -30,7 +29,6 @@ class PointVariable(Variable):
         """
 
         super(PointVariable, self).__init__(dim)
-
 
 class LandmarkVariable(Variable):
 
@@ -50,6 +48,25 @@ class LandmarkVariable(Variable):
 
         self.eqclass = label
 
+class PriorFactor(object):
+
+    def __init__(self, var, A, b):
+
+        """
+        Initializes a prior Gaussian factor on a single variable as follows
+            exp^(|| A * x - b ||^2)
+
+        :param var: Variable corresponding to x
+        :param A: Linear transformation of Variable x
+        :param b: Prior
+        """
+
+        assert (A.shape[0] == b.size), "Measurement not in transformation codomain"
+        assert (A.shape[1] == var.dim), "Variable not in transformation domain"
+
+        self.var = var
+        self.A = A
+        self.b = b
 
 class LinearFactor(object):
 
@@ -66,13 +83,17 @@ class LinearFactor(object):
         :param b: Measurement vector
         """
 
+        assert (A1.shape[0] == b.size), "Measurement not in head transformation codomain"
+        assert (A2.shape[0] == b.size), "Measurement not in tail transformation codomain"
+        assert (A1.shape[1] == head.dim), "Head Variable not in transformation domain"
+        assert (A2.shape[1] == tail.dim), "Tail Variable not in transformation domain"
+
         self.head = head
         self.tail = tail
 
         self.A1 = A1
         self.A2 = A2
         self.b = b
-
 
 class OdometryFactor(LinearFactor):
 
@@ -96,7 +117,6 @@ class OdometryFactor(LinearFactor):
         I = np.eye(t_.shape[0], start.dim)
         super(OdometryFactor, self).__init__(end, start, I, I, t_)
 
-
 class ObservationFactor(LinearFactor):
 
     def __init__(self, point, landmark, H, d):
@@ -112,12 +132,6 @@ class ObservationFactor(LinearFactor):
         :param H: Coordinate frame of the landmark w.r.t. to the position
         :param d: Distance between the position and the closest point of the landmark
         """
-
-        # if not isinstance(d, np.ndarray):
-        #     d = np.array(d)
-
-        # if not d.shape:
-        #     d = d[None]
 
         I = np.eye(d.shape[0], landmark.dim)
         super(ObservationFactor, self).__init__(landmark, point, I, H, d)
@@ -185,7 +199,6 @@ class GaussianFactorGraph(object):
         params = {'Am': Am.asformat('csr'), 'Ap': Ap.asformat('csr')}
 
         return params
-
 
     def observation_array(self):
         return np.concatenate([np.array(f.b) for (u, v, f) in self.graph.edges.data('factor') if isinstance(f, ObservationFactor)])

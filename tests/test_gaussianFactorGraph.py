@@ -37,7 +37,7 @@ class TestAdd(TestGaussianFactorGraph):
 
     def test_add_factor(self):
 
-        self.reset_sim(10)
+        self.reset_sim(seed=1)
 
         fg = factorgraph.GaussianFactorGraph()
 
