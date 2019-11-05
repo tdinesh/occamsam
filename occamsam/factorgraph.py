@@ -192,13 +192,13 @@ class GaussianFactorGraph(object):
         fixed_points = points[:num_fixed]
 
         rows = np.sum([f.b.size for (u, v, f) in observations])
-        lmcols = np.sum([lm.dim for lm in landmarks])
-        freecols = np.sum([pt.dim for pt in free_points])
-        fixcols = int(np.sum([pt.dim for pt in fixed_points]))
+        landmark_cols = np.sum([lm.dim for lm in landmarks])
+        free_cols = np.sum([pt.dim for pt in free_points])
+        fix_cols = int(np.sum([pt.dim for pt in fixed_points]))
 
-        Am = sp.sparse.lil_matrix((rows, lmcols))
-        Ap = sp.sparse.lil_matrix((rows, freecols))
-        Af = sp.sparse.lil_matrix((rows, fixcols))
+        Am = sp.sparse.lil_matrix((rows, landmark_cols))
+        Ap = sp.sparse.lil_matrix((rows, free_cols))
+        Af = sp.sparse.lil_matrix((rows, fix_cols))
         d = np.zeros((rows, 1))
 
         landmark_index = dict([(landmark, landmark.dim * i) for i, landmark in enumerate(landmarks)])
