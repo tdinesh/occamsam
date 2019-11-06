@@ -4,10 +4,10 @@ import scipy as sp
 
 import scipy.sparse
 
+
 class Variable(object):
 
     def __init__(self, dim):
-
         """
         Defines a variable to be optimized in the factor graph based on their pairwise positional relationships
         defined by different Factors.
@@ -18,10 +18,10 @@ class Variable(object):
         self.position = None
         self.dim = dim
 
+
 class PointVariable(Variable):
 
     def __init__(self, dim):
-
         """
         A position variable corresponds to a robots position within some frame.
 
@@ -30,10 +30,10 @@ class PointVariable(Variable):
 
         super(PointVariable, self).__init__(dim)
 
+
 class LandmarkVariable(Variable):
 
     def __init__(self, dim, label):
-
         """
         A landmark variable corresponds to the position of a landmark in some frame. 
         
@@ -44,14 +44,14 @@ class LandmarkVariable(Variable):
         :param label: Equivalence class to which the landmark belongs
         """
 
-        super(LandmarkVariable, self).__init__(dim )
+        super(LandmarkVariable, self).__init__(dim)
 
         self.eqclass = label
+
 
 class PriorFactor(object):
 
     def __init__(self, var, A, b):
-
         """
         Initializes a prior Gaussian factor on a single variable as follows
             exp^(|| A * x - b ||^2)
@@ -68,10 +68,10 @@ class PriorFactor(object):
         self.A = A
         self.b = b
 
+
 class LinearFactor(object):
 
     def __init__(self, head, tail, A1, A2, b):
-
         """
         Initializes a linear Gaussain factor between two variables, modeled as follows
             exp^(|| A1 * x1 - A2 * x2 - b ||^2)
@@ -95,10 +95,10 @@ class LinearFactor(object):
         self.A2 = A2
         self.b = b
 
+
 class OdometryFactor(LinearFactor):
 
     def __init__(self, start, end, R, t):
-
         """
         Odometry factors are linear Gaussian factors between pairs of position variables modeled as follows
             exp^(|| p2 - p1 - R*t ||^2)
@@ -117,10 +117,10 @@ class OdometryFactor(LinearFactor):
         I = np.eye(t_.shape[0], start.dim)
         super(OdometryFactor, self).__init__(end, start, I, I, t_)
 
+
 class ObservationFactor(LinearFactor):
 
     def __init__(self, point, landmark, H, d):
-
         """
         Observation factors are linear Gaussian factors between position and landmark variables
             exp^(|| m  -  H * p  - d ||^2)
@@ -136,6 +136,7 @@ class ObservationFactor(LinearFactor):
         I = np.eye(d.shape[0], landmark.dim)
         super(ObservationFactor, self).__init__(landmark, point, I, H, d)
 
+
 class GaussianFactorGraph(object):
 
     def __init__(self):
@@ -145,7 +146,6 @@ class GaussianFactorGraph(object):
         self._graph = nx.OrderedDiGraph()
 
     def add_factor(self, factor):
-
         """
         Adds a LinearFactor as an edge in our factor graph
 
@@ -156,7 +156,6 @@ class GaussianFactorGraph(object):
         self._graph.add_edge(factor.tail, factor.head, factor=factor)
 
     def observation_system(self, num_free=None):
-
         """
         Returns the linear system of observation constraints on the landmark and pose variables
             Am * m - Ap * p - d = 0
@@ -173,7 +172,7 @@ class GaussianFactorGraph(object):
 
         :param num_free: Number of point variables to include as free parameters
         :return: A: Set of linear observation constraints
-        :return: d: Array of measurements
+        :return: d: Array of distance measurements
         """
 
         observations = [(u, v, f) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, ObservationFactor)]
@@ -188,12 +187,12 @@ class GaussianFactorGraph(object):
             num_fixed = min(max(0, len(points) - num_free), num_updated)
             num_free = len(points) - num_fixed
 
-        free_points = points[-num_free:]
+        free_points = points[-num_free:] if num_free else []
         fixed_points = points[:num_fixed]
 
         rows = np.sum([f.b.size for (u, v, f) in observations])
         landmark_cols = np.sum([lm.dim for lm in landmarks])
-        free_cols = np.sum([pt.dim for pt in free_points])
+        free_cols = int(np.sum([pt.dim for pt in free_points]))
         fix_cols = int(np.sum([pt.dim for pt in fixed_points]))
 
         Am = sp.sparse.lil_matrix((rows, landmark_cols))
@@ -210,14 +209,14 @@ class GaussianFactorGraph(object):
             k = f.b.size
 
             vi = landmark_index[v]
-            Am[ei:ei+k, vi:vi+v.dim] = f.A1
+            Am[ei:ei + k, vi:vi + v.dim] = f.A1
 
             if u in free_index.keys():
                 ui = free_index[u]
-                Ap[ei:ei+k, ui:ui+u.dim] = f.A2
+                Ap[ei:ei + k, ui:ui + u.dim] = f.A2
             else:
                 ui = fixed_index[u]
-                Af[ei:ei+k, ui:ui+u.dim] = f.A2
+                Af[ei:ei + k, ui:ui + u.dim] = f.A2
 
             ei += k
 
@@ -233,10 +232,85 @@ class GaussianFactorGraph(object):
         return A, d
 
     def observation_array(self):
-        return np.concatenate([np.array(f.b) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, ObservationFactor)])
+        return np.concatenate(
+            [np.array(f.b) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, ObservationFactor)])
+
+    def odometry_system(self, num_free=None):
+        """
+        Returns the linear system of odometry constraints on the pose variables
+            Ap * p - t = 0
+
+        If a num_free is specified, we marginalize over the first [1, ... , |p| - num_free] point variables,
+            Ap' * p' - (Af * p'' + t') = 0
+            A * p' - t = 0
+
+        If num_free is larger than |p|, all points will be free
+
+        If less than (|p| - num_free) point variables have known positions, all those that do will be marginalized over
+
+        :param num_free: Number of point variables to include as free parameters
+        :return: A: Set of linear odometry constraints
+        :return: t: Array of translation measurements
+        """
+        observations = [(u, v, f) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, OdometryFactor)]
+        points = [node for node in self._graph.nodes() if isinstance(node, PointVariable)]
+
+        if num_free is None:
+            num_fixed = 0
+            num_free = len(points)
+        else:
+            num_updated = len([p for p in points if p.position is not None])
+            num_fixed = min(max(0, len(points) - num_free), num_updated)
+            num_free = len(points) - num_fixed
+
+        free_points = points[-num_free:] if num_free else []
+        fixed_points = points[:num_fixed]
+
+        rows = np.sum([f.b.size for (u, v, f) in observations])
+        free_cols = int(np.sum([pt.dim for pt in free_points]))
+        fix_cols = int(np.sum([pt.dim for pt in fixed_points]))
+
+        Ap = sp.sparse.lil_matrix((rows, free_cols))
+        Af = sp.sparse.lil_matrix((rows, fix_cols))
+
+        free_index = dict([(point, point.dim * i) for i, point in enumerate(free_points)])
+        fixed_index = dict([(point, point.dim * i) for i, point in enumerate(fixed_points)])
+
+        ei = 0
+        for (u, v, f) in observations:
+
+            k = f.b.size
+
+            if v in free_index.keys():
+                vi = free_index[v]
+                Ap[ei:ei + k, vi:vi + v.dim] = f.A1
+            else:
+                vi = fixed_index[v]
+                Af[ei:ei + k, vi:vi + v.dim] = -f.A1
+
+            if u in free_index.keys():
+                ui = free_index[u]
+                Ap[ei:ei + k, ui:ui + u.dim] = -f.A2
+            else:
+                ui = fixed_index[u]
+                Af[ei:ei + k, ui:ui + u.dim] = f.A2
+
+            ei += k
+
+        t = self.odometry_array()
+
+        if num_fixed > 0:
+            Af = Af.asformat('csr')
+            p = np.concatenate([np.array(p.position) for p in fixed_points])
+            t = Af.dot(p) + t
+
+        A = Ap.asformat('csr')
+
+        return A, t
 
     def odometry_array(self):
-        return np.concatenate([np.array(f.b) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, OdometryFactor)])
+        return np.concatenate(
+            [np.array(f.b) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, OdometryFactor)])
 
     def draw(self):
 
@@ -249,13 +323,3 @@ class GaussianFactorGraph(object):
         plt.plot()
         nx.draw(self._graph)
         plt.show()
-
-
-
-
-
-
-
-
-
-

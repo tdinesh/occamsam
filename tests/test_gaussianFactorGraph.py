@@ -35,7 +35,8 @@ class TestGaussianFactorGraph(TestCase):
             self.num_points = num_points
 
         if num_landmarks is None:
-            self.num_landmarks = np.random.choice(np.arange(np.floor_divide(self.max_landmarks, 5), self.max_landmarks + 1))
+            self.num_landmarks = np.random.choice(
+                np.arange(np.floor_divide(self.max_landmarks, 5), self.max_landmarks + 1))
         else:
             self.num_landmarks = num_landmarks
 
@@ -154,7 +155,7 @@ class TestArrayGen(TestGaussianFactorGraph):
 
 class TestObservationSystem(TestGaussianFactorGraph):
 
-    def test_full1(self):
+    def test_no_marginal1(self):
         sim = self.new_sim(point_dim=1, landmark_dim=1, seed=211)
         fg = utilities.sim_to_factorgraph(sim)
 
@@ -165,7 +166,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         self.assertEqual(A.shape[1], x.size)
         self.assertTrue(np.isclose(A.dot(x), b).all())
 
-    def test_full2(self):
+    def test_no_marginal2(self):
         sim = self.new_sim(point_dim=3, landmark_dim=1, seed=212)
         fg = utilities.sim_to_factorgraph(sim)
 
@@ -176,7 +177,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         self.assertEqual(A.shape[1], x.size)
         self.assertTrue(np.isclose(A.dot(x), b).all())
 
-    def test_full3(self):
+    def test_no_marginal3(self):
         sim = self.new_sim(point_dim=1, landmark_dim=3, seed=213)
         fg = utilities.sim_to_factorgraph(sim)
 
@@ -187,7 +188,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         self.assertEqual(A.shape[1], x.size)
         self.assertTrue(np.isclose(A.dot(x), b).all())
 
-    def test_full4(self):
+    def test_no_marginal4(self):
         sim = self.new_sim(point_dim=3, landmark_dim=3, seed=214)
         fg = utilities.sim_to_factorgraph(sim)
 
@@ -437,3 +438,350 @@ class TestObservationSystem(TestGaussianFactorGraph):
         self.assertEqual(A.shape[0], b.size)
         self.assertEqual(A.shape[1], x.size)
         self.assertTrue(np.isclose(A.dot(x), b).all())
+
+    def test_all_marginal1(self):
+        num_points = 2000
+        num_fixed_points = num_points
+        num_free_points = 0
+
+        sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=251)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, b = fg.observation_system(num_free_points)
+        x = np.ravel(sim.landmarks[sim.observed_landmarks, :])
+
+        self.assertEqual(A.shape[0], b.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), b).all())
+
+    def test_all_marginal2(self):
+        num_points = 2000
+        num_fixed_points = num_points
+        num_free_points = 0
+
+        sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=252)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, b = fg.observation_system(num_free_points)
+        x = np.ravel(sim.landmarks[sim.observed_landmarks, :])
+
+        self.assertEqual(A.shape[0], b.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), b).all())
+
+
+class TestOdometrySystem(TestGaussianFactorGraph):
+
+    def test_no_marginal1(self):
+        sim = self.new_sim(point_dim=1, landmark_dim=1, seed=311)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        A, t = fg.odometry_system()
+        x = np.ravel(sim.points)
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_no_marginal2(self):
+        sim = self.new_sim(point_dim=3, landmark_dim=1, seed=312)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        A, t = fg.odometry_system()
+        x = np.ravel(sim.points)
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_no_marginal3(self):
+        sim = self.new_sim(point_dim=1, landmark_dim=3, seed=313)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        A, t = fg.odometry_system()
+        x = np.ravel(sim.points)
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_no_marginal4(self):
+        sim = self.new_sim(point_dim=3, landmark_dim=3, seed=314)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        A, t = fg.odometry_system()
+        x = np.ravel(sim.points)
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_marginal1(self):
+        num_points = 2000
+        num_fixed_points = 1500
+        num_free_points = num_points - num_fixed_points
+
+        sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=321)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-num_free_points:, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_marginal2(self):
+        num_points = 2000
+        num_fixed_points = 1500
+        num_free_points = num_points - num_fixed_points
+
+        sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=322)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-num_free_points:, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_marginal3(self):
+        num_points = 2000
+        num_fixed_points = 1500
+        num_free_points = num_points - num_fixed_points
+
+        sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=323)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-num_free_points:, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_marginal4(self):
+        num_points = 2000
+        num_fixed_points = 1500
+        num_free_points = num_points - num_fixed_points
+
+        sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=324)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-num_free_points:, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_over_marginal1(self):
+        num_points = 2000
+        num_fixed_points = 1200
+        num_free_points = 500
+
+        sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=331)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_over_marginal2(self):
+        num_points = 2000
+        num_fixed_points = 1200
+        num_free_points = 500
+
+        sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=332)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_over_marginal3(self):
+        num_points = 2000
+        num_fixed_points = 1200
+        num_free_points = 500
+
+        sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=333)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_over_marginal4(self):
+        num_points = 2000
+        num_fixed_points = 1200
+        num_free_points = 500
+
+        sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=334)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_under_marginal1(self):
+        num_points = 2000
+        num_fixed_points = 100
+        num_free_points = 500
+
+        sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=341)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_under_marginal2(self):
+        num_points = 2000
+        num_fixed_points = 242
+        num_free_points = 869
+
+        sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=342)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_under_marginal3(self):
+        num_points = 2000
+        num_fixed_points = 87
+        num_free_points = 419
+
+        sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=343)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_under_marginal4(self):
+        num_points = 2000
+        num_fixed_points = 111
+        num_free_points = 642
+
+        sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=344)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], x.size)
+        self.assertTrue(np.isclose(A.dot(x), t).all())
+
+    def test_all_marginal1(self):
+        num_points = 2000
+        num_fixed_points = num_points
+        num_free_points = 0
+
+        sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=351)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], 0)
+
+    def test_all_marginal2(self):
+        num_points = 2000
+        num_fixed_points = num_points
+        num_free_points = 0
+
+        sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=352)
+        fg = utilities.sim_to_factorgraph(sim)
+
+        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        for i in range(num_fixed_points):
+            points[i].position = sim.points[i, :]
+
+        A, t = fg.odometry_system(num_free_points)
+
+        self.assertEqual(A.shape[0], t.size)
+        self.assertEqual(A.shape[1], 0)
