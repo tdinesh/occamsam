@@ -199,7 +199,6 @@ class GaussianFactorGraph(object):
         Am = sp.sparse.lil_matrix((rows, landmark_cols))
         Ap = sp.sparse.lil_matrix((rows, free_cols))
         Af = sp.sparse.lil_matrix((rows, fix_cols))
-        d = np.zeros((rows, 1))
 
         landmark_index = dict([(landmark, landmark.dim * i) for i, landmark in enumerate(landmarks)])
         free_index = dict([(point, point.dim * i) for i, point in enumerate(free_points)])
@@ -215,21 +214,21 @@ class GaussianFactorGraph(object):
 
             if u in free_index.keys():
                 ui = free_index[u]
-                Ap[ei:ei+k, ui:ui+u.dim] = -f.A2
+                Ap[ei:ei+k, ui:ui+u.dim] = f.A2
             else:
                 ui = fixed_index[u]
-                Af[ei:ei+k, ui:ui+u.dim] = -f.A2
-
-            d[ei:ei+k] = f.b
+                Af[ei:ei+k, ui:ui+u.dim] = f.A2
 
             ei += k
 
+        d = self.observation_array()
+
         if num_fixed > 0:
-            Af = Af.astype('csr')
+            Af = Af.asformat('csr')
             p = np.concatenate([np.array(p.position) for p in fixed_points])
             d = Af.dot(p) + d
 
-        A = sp.sparse.hstack([Am, Ap], format='csr')
+        A = sp.sparse.hstack([Am, -Ap], format='csr')
 
         return A, d
 

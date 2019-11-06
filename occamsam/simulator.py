@@ -2,6 +2,8 @@ import numpy as np
 import scipy as sp
 import scipy.stats
 
+from collections import OrderedDict
+
 class Simulator(object):
 
     def __init__(self, point_dim, landmark_dim, num_points, num_landmarks):
@@ -34,6 +36,8 @@ class Simulator(object):
         lids, pids = np.ravel(lids), np.ravel(pids)
         rids = np.sort(np.random.choice(self.num_points * self.num_landmarks, self.num_observations, replace=False))
         self.observation_pairs = list(zip(pids[rids].tolist(), lids[rids].tolist()))
+
+        self.observed_landmarks = list(OrderedDict.fromkeys(lids[rids].tolist()))
 
     def odometry_factors(self):
 
