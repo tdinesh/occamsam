@@ -198,6 +198,7 @@ class GaussianFactorGraph(object):
         Am = sp.sparse.lil_matrix((rows, landmark_cols))
         Ap = sp.sparse.lil_matrix((rows, free_cols))
         Af = sp.sparse.lil_matrix((rows, fix_cols))
+        d = np.zeros(rows)
 
         landmark_index = dict([(landmark, landmark.dim * i) for i, landmark in enumerate(landmarks)])
         free_index = dict([(point, point.dim * i) for i, point in enumerate(free_points)])
@@ -210,6 +211,7 @@ class GaussianFactorGraph(object):
 
             vi = landmark_index[v]
             Am[ei:ei + k, vi:vi + v.dim] = f.A1
+            d[ei:ei + k] = f.b
 
             if u in free_index.keys():
                 ui = free_index[u]
@@ -220,8 +222,6 @@ class GaussianFactorGraph(object):
 
             ei += k
 
-        d = self.observation_array()
-
         if num_fixed > 0:
             Af = Af.asformat('csr')
             p = np.concatenate([np.array(p.position) for p in fixed_points])
@@ -230,10 +230,6 @@ class GaussianFactorGraph(object):
         A = sp.sparse.hstack([Am, -Ap], format='csr')
 
         return A, d
-
-    def observation_array(self):
-        return np.concatenate(
-            [np.array(f.b) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, ObservationFactor)])
 
     def odometry_system(self, num_free=None):
         """
@@ -272,6 +268,7 @@ class GaussianFactorGraph(object):
 
         Ap = sp.sparse.lil_matrix((rows, free_cols))
         Af = sp.sparse.lil_matrix((rows, fix_cols))
+        t = np.zeros(rows)
 
         free_index = dict([(point, point.dim * i) for i, point in enumerate(free_points)])
         fixed_index = dict([(point, point.dim * i) for i, point in enumerate(fixed_points)])
@@ -280,6 +277,8 @@ class GaussianFactorGraph(object):
         for (u, v, f) in observations:
 
             k = f.b.size
+
+            t[ei:ei+k] = f.b
 
             if v in free_index.keys():
                 vi = free_index[v]
@@ -297,8 +296,6 @@ class GaussianFactorGraph(object):
 
             ei += k
 
-        t = self.odometry_array()
-
         if num_fixed > 0:
             Af = Af.asformat('csr')
             p = np.concatenate([np.array(p.position) for p in fixed_points])
@@ -307,10 +304,6 @@ class GaussianFactorGraph(object):
         A = Ap.asformat('csr')
 
         return A, t
-
-    def odometry_array(self):
-        return np.concatenate(
-            [np.array(f.b) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, OdometryFactor)])
 
     def draw(self):
 
