@@ -76,7 +76,7 @@ class TestArrayGen(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=1, seed=111)
         fg = utilities.sim_to_factorgraph(sim)
 
-        d_graph = fg.observation_array()
+        _, d_graph = fg.observation_system()
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
 
         self.assertEqual(len(d_graph), len(d_sim))
@@ -86,7 +86,7 @@ class TestArrayGen(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=3, seed=112)
         fg = utilities.sim_to_factorgraph(sim)
 
-        d_graph = fg.observation_array()
+        _, d_graph = fg.observation_system()
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
 
         self.assertEqual(len(d_graph), len(d_sim))
@@ -96,7 +96,7 @@ class TestArrayGen(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, seed=113)
         fg = utilities.sim_to_factorgraph(sim)
 
-        d_graph = fg.observation_array()
+        _, d_graph = fg.observation_system()
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
 
         self.assertEqual(len(d_graph), len(d_sim))
@@ -106,7 +106,7 @@ class TestArrayGen(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, seed=114)
         fg = utilities.sim_to_factorgraph(sim)
 
-        d_graph = fg.observation_array()
+        _, d_graph = fg.observation_system()
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
 
         self.assertEqual(len(d_graph), len(d_sim))
@@ -116,7 +116,7 @@ class TestArrayGen(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=1, seed=121)
         fg = utilities.sim_to_factorgraph(sim)
 
-        t_graph = fg.odometry_array()
+        _, t_graph = fg.odometry_system()
         t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_graph), len(t_sim))
@@ -126,7 +126,7 @@ class TestArrayGen(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=3, seed=122)
         fg = utilities.sim_to_factorgraph(sim)
 
-        t_graph = fg.odometry_array()
+        _, t_graph = fg.odometry_system()
         t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_graph), len(t_sim))
@@ -136,7 +136,7 @@ class TestArrayGen(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, seed=123)
         fg = utilities.sim_to_factorgraph(sim)
 
-        t_graph = fg.odometry_array()
+        _, t_graph = fg.odometry_system()
         t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_graph), len(t_sim))
@@ -146,7 +146,7 @@ class TestArrayGen(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, seed=124)
         fg = utilities.sim_to_factorgraph(sim)
 
-        t_graph = fg.odometry_array()
+        _, t_graph = fg.odometry_system()
         t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_graph), len(t_sim))
