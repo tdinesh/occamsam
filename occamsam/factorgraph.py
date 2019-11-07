@@ -155,6 +155,9 @@ class GaussianFactorGraph(object):
 
         self._graph.add_edge(factor.tail, factor.head, factor=factor)
 
+        self.variables = self._graph.nodes()
+        self.factors = self._graph.edges()
+
     def observation_system(self, num_free=None):
         """
         Returns the linear system of observation constraints on the landmark and pose variables

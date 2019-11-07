@@ -66,8 +66,8 @@ class TestAdd(TestGaussianFactorGraph):
         for factor in observation_factors:
             fg.add_factor(factor)
 
-        self.assertEqual(fg._graph.number_of_nodes(), self.num_points + self.num_landmarks)
-        self.assertEqual(fg._graph.number_of_edges(), len(odometry_factors) + len(observation_factors))
+        self.assertEqual(len(fg.variables), self.num_points + self.num_landmarks)
+        self.assertEqual(len(fg.factors), len(odometry_factors) + len(observation_factors))
 
 
 class TestArrayGen(TestGaussianFactorGraph):
@@ -207,7 +207,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=221)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -227,7 +227,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=222)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -247,7 +247,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=223)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -267,7 +267,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=224)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -287,7 +287,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=231)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -307,7 +307,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=232)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -327,7 +327,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=233)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -347,7 +347,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=234)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -367,7 +367,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=241)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -387,7 +387,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=242)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -407,7 +407,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=243)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -427,7 +427,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=244)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -447,7 +447,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=251)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -466,7 +466,7 @@ class TestObservationSystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=252)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -532,7 +532,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=321)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -551,7 +551,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=322)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -570,7 +570,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=323)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -589,7 +589,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=324)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -608,7 +608,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=331)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -627,7 +627,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=332)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -646,7 +646,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=333)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -665,7 +665,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=334)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -684,7 +684,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=1, num_points=num_points, seed=341)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -703,7 +703,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=1, landmark_dim=3, num_points=num_points, seed=342)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -722,7 +722,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=343)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -741,7 +741,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=344)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -760,7 +760,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=1, num_points=num_points, seed=351)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
@@ -777,7 +777,7 @@ class TestOdometrySystem(TestGaussianFactorGraph):
         sim = self.new_sim(point_dim=3, landmark_dim=3, num_points=num_points, seed=352)
         fg = utilities.sim_to_factorgraph(sim)
 
-        points = [node for node in fg._graph.nodes() if isinstance(node, factorgraph.PointVariable)]
+        points = [x for x in fg.variables if isinstance(x, factorgraph.PointVariable)]
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
