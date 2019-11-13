@@ -1,50 +1,97 @@
-import numpy as np
-import networkx as nx
-import scipy as sp
+from factor import LinearFactor, ObservationFactor, OdometryFactor
+from variable import LandmarkVariable, PointVariable
 
+import numpy as np
+import scipy as sp
 import scipy.sparse
 
-from factor import OdometryFactor, ObservationFactor
-from variable import PointVariable, LandmarkVariable
+import networkx as nx
+
+
+class SingleBlockRowMatrix(object):
+
+    def __init__(self):
+        self._indices = []
+        self._data = []
+
+    def append_row(self, B, j):
+        self._indices.append(j)
+        self._data.append(B)
+
+    def set_row(self, B, i, j):
+        self._indices[i] = j
+        self._data[i] = B
+
+    def remove_row(self, i):
+        del self._data[i]
+        del self._indices[i]
+
+    def remove_col(self, j):
+        indices = np.array(self._indices)
+        rows = np.flatnonzero(indices != j)
+        indices = indices[indices != j]
+        indices[indices > j] += -1
+        self._indices = indices.tolist()
+
+        self._data = [self._data[i] for i in rows]
+
+    def merge_col(self, i, j):
+        indices = np.array(self._indices)
+        indices[indices == j] = i
+        indices[indices > j] += -1
+        self._indices = indices.tolist()
+
+    def tobsr(self):
+        data = np.array(self._data)
+        indices = np.array(self._indices)
+        indptr = np.arange(len(self._indices) + 1)
+
+        return sp.sparse.bsr_matrix((data, indices, indptr))
 
 
 class GaussianFactorGraph(object):
 
-    def __init__(self):
+    def __init__(self, free_point_window=None):
 
         # For python versions < 3.6, we need to use Ordered(Graph) to access nodes in the order they are presented
         # In python 3.6+, dicts are ordered by default
         self._graph = nx.OrderedDiGraph()
 
+        self.free_point_window = free_point_window  # number of point variables to include as free parameters in
+        # the linear systems
+
+        # publicly access
         self.variables = self._graph.nodes()
         self.factors = self._graph.edges()
 
-    def add_factor(self, factor):
+    def add_factor(self, f):
         """
         Adds a LinearFactor as an edge in our factor graph
 
-        While it may seem redundant to store the entire factor object in the edge data, this will allow us to recover which
-        variables were associated by the later optimization
         """
 
-        self._graph.add_edge(factor.tail, factor.head, factor=factor)
+        assert (isinstance(f, LinearFactor)), "Expected type LinearFactor, got %s" % type(f)
 
-    def observation_system(self, num_free=None):
+        self._graph.add_edge(f.tail, f.head, factor=f)
+
+    # def contract_variables(self, u, v):
+
+    def observation_system(self):
         """
         Returns the linear system of observation constraints on the landmark and pose variables
             Am * m - Ap * p - d = 0
             A * (m, p)^T - d = 0
 
-        If a num_free is specified, we marginalize over the first [1, ... , |p| - num_free] point variables,
+        If a free_point_window is specified in the class, we marginalize over the first [1, ... , |p| - free_point_window]
+        point variables,
             Am * m - Ap' * p' - (Af * p'' + d') = 0
             Am * m - Ap' * p' - d = 0
             A * (m, p')^T - d = 0
 
-        If num_free is larger than |p|, all points will be free
+        If the free_point_window is larger than |p|, all points will be free
 
-        If less than (|p| - num_free) point variables have known positions, all those that do will be marginalized over
+        If less than (|p| - free_point_window) point variables have known positions, all those that do will be marginalized over
 
-        :param num_free: Number of point variables to include as free parameters
         :return: A: Set of linear observation constraints
         :return: d: Array of distance measurements
         """
@@ -53,12 +100,12 @@ class GaussianFactorGraph(object):
         landmarks = [node for node in self._graph.nodes() if isinstance(node, LandmarkVariable)]
         points = [node for node in self._graph.nodes() if isinstance(node, PointVariable)]
 
-        if num_free is None:
+        if self.free_point_window is None:
             num_fixed = 0
             num_free = len(points)
         else:
             num_updated = len([p for p in points if p.position is not None])
-            num_fixed = min(max(0, len(points) - num_free), num_updated)
+            num_fixed = min(max(0, len(points) - self.free_point_window), num_updated)
             num_free = len(points) - num_fixed
 
         free_points = points[-num_free:] if num_free else []
@@ -105,32 +152,33 @@ class GaussianFactorGraph(object):
 
         return A, d
 
-    def odometry_system(self, num_free=None):
+    def odometry_system(self):
         """
         Returns the linear system of odometry constraints on the pose variables
             Ap * p - t = 0
 
-        If a num_free is specified, we marginalize over the first [1, ... , |p| - num_free] point variables,
+        If a free_point_window is specified in the class, we marginalize over the first [1, ... , |p| - free_point_window]
+        point variables,
             Ap' * p' - (Af * p'' + t') = 0
             A * p' - t = 0
 
-        If num_free is larger than |p|, all points will be free
+        If the free_point_window is larger than |p|, all points will be free
 
-        If less than (|p| - num_free) point variables have known positions, all those that do will be marginalized over
+        If less than (|p| - free_point_window) point variables have known positions, all those that do will be marginalized over
 
-        :param num_free: Number of point variables to include as free parameters
         :return: A: Set of linear odometry constraints
         :return: t: Array of translation measurements
         """
+
         observations = [(u, v, f) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, OdometryFactor)]
         points = [node for node in self._graph.nodes() if isinstance(node, PointVariable)]
 
-        if num_free is None:
+        if self.free_point_window is None:
             num_fixed = 0
             num_free = len(points)
         else:
             num_updated = len([p for p in points if p.position is not None])
-            num_fixed = min(max(0, len(points) - num_free), num_updated)
+            num_fixed = min(max(0, len(points) - self.free_point_window), num_updated)
             num_free = len(points) - num_fixed
 
         free_points = points[-num_free:] if num_free else []
@@ -152,7 +200,7 @@ class GaussianFactorGraph(object):
 
             k = f.b.size
 
-            t[ei:ei+k] = f.b
+            t[ei:ei + k] = f.b
 
             if v in free_index.keys():
                 vi = free_index[v]
@@ -179,8 +227,6 @@ class GaussianFactorGraph(object):
 
         return A, t
 
-    # def contract_variables(self, u, v):
-
     def draw(self):
 
         """
@@ -192,3 +238,18 @@ class GaussianFactorGraph(object):
         plt.plot()
         nx.draw(self._graph)
         plt.show()
+
+
+if __name__ == '__main__':
+
+    mat = SingleBlockRowMatrix()
+
+    np.random.seed(11)
+    mat._indices = np.random.randint(0, 200, size=10000).tolist()
+
+    for _ in range(500):
+        i, j = np.random.choice(mat._indices, size=2, replace=False)
+        i, j = np.sort([i, j])
+
+        mat.merge_columns1(i, j)
+        mat.merge_columns2(i, j)

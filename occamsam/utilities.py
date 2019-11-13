@@ -30,10 +30,3 @@ def sim_to_factorgraph(sim):
             j += 1
 
     return fg
-
-if __name__ == '__main__':
-
-    sim = simulator.Simulator(3, 1, 100, 20)
-    fg = sim_to_factorgraph(sim)
-
-    fg.observation_system(5)

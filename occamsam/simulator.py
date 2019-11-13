@@ -4,6 +4,7 @@ import scipy.stats
 
 from collections import OrderedDict
 
+
 class Simulator(object):
 
     def __init__(self, point_dim, landmark_dim, num_points, num_landmarks):
@@ -62,3 +63,26 @@ class Simulator(object):
 
         return self.observation_pairs, hs, ds
 
+
+MAX_DIM = 3
+MAX_POINTS = 2000
+MAX_LANDMARKS = 100
+
+
+def new_simulation(point_dim=None, landmark_dim=None, num_points=None, num_landmarks=None, seed=None):
+    np.random.seed(seed)
+
+    if point_dim is None:
+        point_dim = np.random.choice(np.arange(1, MAX_DIM + 1))
+
+    if landmark_dim is None:
+        landmark_dim = np.random.choice(np.arange(1, MAX_DIM + 1))
+
+    if num_points is None:
+        num_points = np.random.choice(np.arange(np.floor_divide(MAX_POINTS, 5), MAX_POINTS + 1))
+
+    if num_landmarks is None:
+        num_landmarks = np.random.choice(
+            np.arange(np.floor_divide(MAX_LANDMARKS, 5), MAX_LANDMARKS + 1))
+
+    return Simulator(point_dim, landmark_dim, num_points, num_landmarks)
