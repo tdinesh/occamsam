@@ -1,4 +1,5 @@
 from factor import LinearFactor, ObservationFactor, OdometryFactor
+from sparse import DBSRMatrix
 from variable import LandmarkVariable, PointVariable
 
 import numpy as np
@@ -6,47 +7,6 @@ import scipy as sp
 import scipy.sparse
 
 import networkx as nx
-
-
-class SingleBlockRowMatrix(object):
-
-    def __init__(self):
-        self._indices = []
-        self._data = []
-
-    def append_row(self, B, j):
-        self._indices.append(j)
-        self._data.append(B)
-
-    def set_row(self, B, i, j):
-        self._indices[i] = j
-        self._data[i] = B
-
-    def remove_row(self, i):
-        del self._data[i]
-        del self._indices[i]
-
-    def remove_col(self, j):
-        indices = np.array(self._indices)
-        rows = np.flatnonzero(indices != j)
-        indices = indices[indices != j]
-        indices[indices > j] += -1
-        self._indices = indices.tolist()
-
-        self._data = [self._data[i] for i in rows]
-
-    def merge_col(self, i, j):
-        indices = np.array(self._indices)
-        indices[indices == j] = i
-        indices[indices > j] += -1
-        self._indices = indices.tolist()
-
-    def tobsr(self):
-        data = np.array(self._data)
-        indices = np.array(self._indices)
-        indptr = np.arange(len(self._indices) + 1)
-
-        return sp.sparse.bsr_matrix((data, indices, indptr))
 
 
 class GaussianFactorGraph(object):
@@ -242,7 +202,7 @@ class GaussianFactorGraph(object):
 
 if __name__ == '__main__':
 
-    mat = SingleBlockRowMatrix()
+    mat = DBSRMatrix()
 
     np.random.seed(11)
     mat._indices = np.random.randint(0, 200, size=10000).tolist()
