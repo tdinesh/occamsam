@@ -42,7 +42,7 @@ class TestObservationArray(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=1, seed=111)
         fg = sim_to_factorgraph(sim)
 
-        _, d_sys = fg.observation_system()
+        _, d_sys = fg.observation_system
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
 
         self.assertEqual(len(d_sys), len(d_sim))
@@ -52,7 +52,7 @@ class TestObservationArray(unittest.TestCase):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=112)
         fg = sim_to_factorgraph(sim)
 
-        _, d_sys = fg.observation_system()
+        _, d_sys = fg.observation_system
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
 
         self.assertEqual(len(d_sys), len(d_sim))
@@ -62,7 +62,7 @@ class TestObservationArray(unittest.TestCase):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=113)
         fg = sim_to_factorgraph(sim)
 
-        _, d_sys = fg.observation_system()
+        _, d_sys = fg.observation_system
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
 
         self.assertEqual(len(d_sys), len(d_sim))
@@ -72,7 +72,7 @@ class TestObservationArray(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=114)
         fg = sim_to_factorgraph(sim)
 
-        _, d_sys = fg.observation_system()
+        _, d_sys = fg.observation_system
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
 
         self.assertEqual(len(d_sys), len(d_sim))
@@ -85,7 +85,7 @@ class TestOdometryArray(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=1, seed=121)
         fg = sim_to_factorgraph(sim)
 
-        _, t_sys = fg.odometry_system()
+        _, t_sys = fg.odometry_system
         t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_sys), len(t_sim))
@@ -95,7 +95,7 @@ class TestOdometryArray(unittest.TestCase):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=122)
         fg = sim_to_factorgraph(sim)
 
-        _, t_sys = fg.odometry_system()
+        _, t_sys = fg.odometry_system
         t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_sys), len(t_sim))
@@ -105,7 +105,7 @@ class TestOdometryArray(unittest.TestCase):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=123)
         fg = sim_to_factorgraph(sim)
 
-        _, t_sys = fg.odometry_system()
+        _, t_sys = fg.odometry_system
         t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_sys), len(t_sim))
@@ -115,7 +115,7 @@ class TestOdometryArray(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=124)
         fg = sim_to_factorgraph(sim)
 
-        _, t_sys = fg.odometry_system()
+        _, t_sys = fg.odometry_system
         t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_sys), len(t_sim))
@@ -128,7 +128,7 @@ class TestObservationSystem(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=1, seed=211)
         fg = sim_to_factorgraph(sim)
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]), np.ravel(sim.points)))
 
         self.assertEqual(A.shape[0], b.size)
@@ -139,7 +139,7 @@ class TestObservationSystem(unittest.TestCase):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=212)
         fg = sim_to_factorgraph(sim)
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]), np.ravel(sim.points)))
 
         self.assertEqual(A.shape[0], b.size)
@@ -150,7 +150,7 @@ class TestObservationSystem(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=213)
         fg = sim_to_factorgraph(sim)
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]), np.ravel(sim.points)))
 
         self.assertEqual(A.shape[0], b.size)
@@ -161,7 +161,7 @@ class TestObservationSystem(unittest.TestCase):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=214)
         fg = sim_to_factorgraph(sim)
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]), np.ravel(sim.points)))
 
         self.assertEqual(A.shape[0], b.size)
@@ -181,7 +181,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-num_free_points:, :])))
 
@@ -202,7 +202,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-num_free_points:, :])))
 
@@ -223,7 +223,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-num_free_points:, :])))
 
@@ -244,7 +244,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-num_free_points:, :])))
 
@@ -265,7 +265,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
@@ -286,7 +286,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
@@ -307,7 +307,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
@@ -328,7 +328,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
@@ -349,7 +349,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
@@ -370,7 +370,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
@@ -391,7 +391,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
@@ -412,7 +412,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
                             np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
@@ -433,7 +433,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.ravel(sim.landmarks[sim.observed_landmarks, :])
 
         self.assertEqual(A.shape[0], b.size)
@@ -453,7 +453,7 @@ class TestObservationSystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, b = fg.observation_system()
+        A, b = fg.observation_system
         x = np.ravel(sim.landmarks[sim.observed_landmarks, :])
 
         self.assertEqual(A.shape[0], b.size)
@@ -467,7 +467,7 @@ class TestOdometrySystem(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=1, seed=311)
         fg = sim_to_factorgraph(sim)
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points)
 
         self.assertEqual(A.shape[0], t.size)
@@ -478,7 +478,7 @@ class TestOdometrySystem(unittest.TestCase):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=312)
         fg = sim_to_factorgraph(sim)
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points)
 
         self.assertEqual(A.shape[0], t.size)
@@ -489,7 +489,7 @@ class TestOdometrySystem(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=313)
         fg = sim_to_factorgraph(sim)
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points)
 
         self.assertEqual(A.shape[0], t.size)
@@ -500,7 +500,7 @@ class TestOdometrySystem(unittest.TestCase):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=314)
         fg = sim_to_factorgraph(sim)
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points)
 
         self.assertEqual(A.shape[0], t.size)
@@ -520,7 +520,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-num_free_points:, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -540,7 +540,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-num_free_points:, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -560,7 +560,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-num_free_points:, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -580,7 +580,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-num_free_points:, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -600,7 +600,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -620,7 +620,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -640,7 +640,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -660,7 +660,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -680,7 +680,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -700,7 +700,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -720,7 +720,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -740,7 +740,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(A.shape[0], t.size)
@@ -760,7 +760,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
 
         self.assertEqual(A.shape[0], t.size)
         self.assertEqual(A.shape[1], 0)
@@ -778,7 +778,7 @@ class TestOdometrySystem(unittest.TestCase):
         for i in range(num_fixed_points):
             points[i].position = sim.points[i, :]
 
-        A, t = fg.odometry_system()
+        A, t = fg.odometry_system
 
         self.assertEqual(A.shape[0], t.size)
         self.assertEqual(A.shape[1], 0)
@@ -812,7 +812,7 @@ class TestAccessSpeed(unittest.TestCase):
                 fg.add_factor(observation_factors[j])
                 j += 1
 
-            fg.observation_system()
+            fg.observation_system
 
         self.assertTrue(True)
 

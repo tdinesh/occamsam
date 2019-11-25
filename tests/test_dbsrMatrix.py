@@ -22,7 +22,7 @@ class TestSingleBlock(unittest.TestCase):
 
         bsr = bsr_matrix((data, indices, indptr))
 
-        self.assertTrue(np.allclose(bsr.todense(), sbrm.tobsr().todense()))
+        self.assertTrue(np.allclose(bsr.todense(), sbrm.to_bsr().todense()))
 
     def test_remove_row(self):
 
@@ -44,30 +44,30 @@ class TestSingleBlock(unittest.TestCase):
 
         bsr = bsr_matrix((data, indices, indptr))
 
-        self.assertTrue(np.allclose(bsr.todense(), sbrm.tobsr().todense()))
+        self.assertTrue(np.allclose(bsr.todense(), sbrm.to_bsr().todense()))
 
-    # def test_remove_col(self):
+    def test_remove_col(self):
 
-    #     nblocks = 11
+        nblocks = 11
 
-    #     np.random.seed(nblocks)
-    #     data = np.random.random((nblocks, 3, 2))
-    #     indices = np.random.randint(0, 5, size=nblocks)
+        np.random.seed(nblocks)
+        data = np.random.random((nblocks, 3, 2))
+        indices = np.random.randint(0, 5, size=nblocks)
 
-    #     sbrm = DBSRMatrix()
-    #     for i in range(nblocks):
-    #         sbrm.append_row(indices[i], data[i])
+        sbrm = DBSRMatrix()
+        for i in range(nblocks):
+            sbrm.append_row(indices[i], data[i])
 
-    #     data = np.delete(data, np.flatnonzero(indices == 3), 0)
-    #     indices = np.delete(indices, np.flatnonzero(indices == 3))
-    #     indices[indices > 3] += -1
-    #     indptr = np.arange(len(indices) + 1)
+        data = np.delete(data, np.flatnonzero(indices == 3), 0)
+        indices = np.delete(indices, np.flatnonzero(indices == 3))
+        indices[indices > 3] += -1
+        indptr = np.arange(len(indices) + 1)
 
-    #     sbrm.remove_col(3)
+        sbrm.remove_col(3)
 
-    #     bsr = bsr_matrix((data, indices, indptr))
+        bsr = bsr_matrix((data, indices, indptr))
 
-    #     self.assertTrue(np.allclose(bsr.todense(), sbrm.tobsr().todense()))
+        self.assertTrue(np.allclose(bsr.todense(), sbrm.to_bsr().todense()))
 
     def test_merge_col(self):
 
@@ -89,7 +89,7 @@ class TestSingleBlock(unittest.TestCase):
 
         bsr = bsr_matrix((data, indices, indptr))
 
-        self.assertTrue(np.allclose(bsr.todense(), sbrm.tobsr().todense()))
+        self.assertTrue(np.allclose(bsr.todense(), sbrm.to_bsr().todense()))
 
 
 if __name__ == '__main__':

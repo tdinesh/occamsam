@@ -85,6 +85,6 @@ class ObservationFactor(LinearFactor):
         :param d: Distance between the position and the closest point of the landmark
         """
 
-        # When |d| > |m|, this will pick up the first |m| components... is that the bx we want?
+        # TODO When |d| > |m|, this will pick up the first |m| components... is that the bx we want?
         I = np.eye(d.shape[0], landmark.dim)
         super(ObservationFactor, self).__init__(landmark, point, I, H, d)
