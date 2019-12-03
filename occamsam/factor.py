@@ -72,19 +72,19 @@ class OdometryFactor(LinearFactor):
 
 class ObservationFactor(LinearFactor):
 
-    def __init__(self, point, landmark, H, d):
+    def __init__(self, point, landmark, R, d):
         """
         Observation factors are linear Gaussian factors between position and landmark variables
-            exp^(|| m  -  H * p  - d ||^2)
+            exp^(|| m  -  R * p  - d ||^2)
 
-        Note that the transformation H can be provided by using a compass module in tandem with a feature extractor.
+        Note that the transformation R can be provided by using a compass module in tandem with a feature extractor.
 
         :param point: PointVariable at which the landmark is observed
         :param landmark: LandmarkVariable which is observed
-        :param H: Coordinate frame of the landmark w.r.t. to the position
+        :param R: Coordinate frame of the landmark w.r.t. to the position
         :param d: Distance between the position and the closest point of the landmark
         """
 
         # TODO When |d| > |m|, this will pick up the first |m| components... is that the bx we want?
         I = np.eye(d.shape[0], landmark.dim)
-        super(ObservationFactor, self).__init__(landmark, point, I, H, d)
+        super(ObservationFactor, self).__init__(landmark, point, I, R, d)

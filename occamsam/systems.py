@@ -16,107 +16,105 @@ class DynamicMeasurementSystem(object):
         :param max_free_points:
         """
 
-        self._Ap = DBSRMatrix()
-        self._free_point_buffer = OrderedDict()  # map of point variables to their associated column in Ap
         if max_free_points is None:
             self.max_free_points = sys.maxsize
         else:
             self.max_free_points = max_free_points
 
+        self._free_point_buffer = OrderedDict()  # map of point variables to their associated column in A and B
+        self._A = DBSRMatrix()
+        self._B = DBSRMatrix()
+
+        self._landmark_index = {}  # map of landmark variables to their associated column in A and B
+        self._H = DBSRMatrix()
+
+        self._array_index = {'d': {}, 't': {}}  # map of point variables to rows in which they participate in a factor
         self._d = []
-        self._marginalization_index = {}  # map of point variables to rows in which they participate in a factor
+        self._t = []
 
     def append(self, f):
-        pass
 
-    def to_sparse(self):
-        pass
+        if isinstance(f, OdometryFactor):
+
+            if len(self._t) == 0:
+                init_position = np.zeros(f.head.dim)
+                self._append_to_free_buffer(f.tail)
+                self._array_index['t'][f.tail] = [0]
+                self._B.append_row(0, np.eye(len(init_position)))
+                self._t.append(init_position)
+
+            index = len(self._t)
+
+            self._append_to_free_buffer(f.tail)
+            if f.tail not in self._array_index['t']:
+                self._array_index['t'][f.tail] = []
+            self._array_index['t'][f.tail].append(index)
+
+            self._append_to_free_buffer(f.head)
+            if f.head not in self._array_index['t']:
+                self._array_index['t'][f.head] = []
+            self._array_index['t'][f.head].append(index)
+
+            self._B.append_row([list(self._free_point_buffer.keys()).index(f.tail),
+                                list(self._free_point_buffer.keys()).index(f.head)],
+                               [f.A1, -f.A2])
+            self._t.append(f.b)
+
+        elif isinstance(f, ObservationFactor):
+
+            if f.head not in self._landmark_index:
+                self._landmark_index[f.head] = len(self._landmark_index)
+
+            self._append_to_free_buffer(f.tail)
+            if f.tail not in self._array_index['d']:
+                self._array_index['d'][f.tail] = []
+            self._array_index['d'][f.tail].append(len(self._d))
+
+            self._H.append_row(self._landmark_index[f.head], f.A1)
+            self._A.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2)
+            self._d.append(f.b)
+
+        else:
+            raise TypeError
 
     def _append_to_free_buffer(self, point):
+
+        if point in self._free_point_buffer:
+            return
+
         self._free_point_buffer[point] = {}
         num_free = len(self._free_point_buffer)
         if num_free > self.max_free_points:
 
             # traverse buffer from back to front marginalizing points with known positions
-            for oldest_index, oldest_point in reversed(list(enumerate(self._free_point_buffer))[self.max_free_points:]):
+            num_old = num_free - self.max_free_points
+            for oldest_point in list(self._free_point_buffer)[:num_old]:
                 if oldest_point.position is not None:
-                    x = self._free_point_buffer.popitem(last=True)
+                    x = self._free_point_buffer.popitem(last=False)[0]
                     assert (oldest_point is x), "Buffer ordering corrupted"
-                    self._marginalize(oldest_point, oldest_index)
+                    self._marginalize(oldest_point, 0)
 
     def _marginalize(self, point, col):
-        col_data = self._Ap.get_col(col)
-        n_blocks = len(col_data)
-        n_rows = len(self._marginalization_index[point])
-        assert (n_rows == n_blocks), "Expected %d blocks in column, got %d instead" % (n_rows, n_blocks)
-        for i, (row, block) in reversed(list(enumerate(col_data))):
-            self._d[self._marginalization_index[point][i]] += np.dot(block, point.position)
-            self._Ap.remove_row(row)
+        for A, b, array_index in [(self._A, self._d, self._array_index['d']),
+                                  (self._B, self._t, self._array_index['t'])]:
+            col_data = A.get_col(col)
+            n_blocks = len(col_data)
+            if n_blocks == 0:
+                continue
+            n_rows = len(array_index[point])
+            assert (n_rows == n_blocks), "Expected %d blocks in column, got %d instead" % (n_rows, n_blocks)
+            for i, (row, block) in reversed(list(enumerate(col_data))):
+                b[array_index[point][i]] += np.dot(block, point.position)
+                A.remove_row(row)
 
-
-class ObservationSystem(DynamicMeasurementSystem):
-
-    def __init__(self, max_free_points=None):
-        """
-        :param max_free_points:
-        """
-        super(ObservationSystem, self).__init__(max_free_points=max_free_points)
-        self._Am = DBSRMatrix()
-        self._landmark_index = {}  # map of landmark variables to their associated column in Am
-
-    def append(self, f):
-
-        assert (isinstance(f, ObservationFactor)), "Expected type ObservationFactor, got %s" % type(f)
-
-        if f.head not in self._landmark_index:
-            self._landmark_index[f.head] = len(self._landmark_index)
-
-        if f.tail not in self._free_point_buffer:
-            self._append_to_free_buffer(f.tail)
-
-        if f.tail not in self._marginalization_index:
-            self._marginalization_index[f.tail] = []
-
-        self._Am.append_row(self._landmark_index[f.head], f.A1)
-        self._Ap.append_row(list(self._free_point_buffer.keys()).index(f.tail), f.A2)
-        self._d.append(f.b)
-        self._marginalization_index[f.tail].append(len(self._d))
-
-    def to_sparse(self):
-        A = sp.sparse.bmat([[None, None], [self._Am.to_bsr(), self._Ap.to_bsr()]])
+    @property
+    def observation_system(self):
+        A = sp.sparse.bmat([[None, None], [self._H.to_bsr(), self._A.to_bsr()]]).tocsr()
         d = np.block(self._d)
         return A, d
 
-
-class OdometrySystem(DynamicMeasurementSystem):
-
-    def __init__(self, init_position, max_free_points=None):
-        """
-        :param init_position:
-        :param max_free_points:
-        """
-        super(OdometrySystem, self).__init__(max_free_points)
-        self._Ap.append_row(0, np.eye(len(init_position)))
-        self._d.append(init_position)
-
-    def append(self, f):
-
-        assert (isinstance(f, OdometryFactor)), "Expected type OdometryFactor, got %s" % type(f)
-
-        if f.head not in self._free_point_buffer:
-            self._free_point_buffer[f.head] = {}
-
-        if f.tail not in self._free_point_buffer:
-            self._append_to_free_buffer(f.tail)
-
-        if f.tail not in self._marginalization_index:
-            self._marginalization_index[f.tail] = []
-
-        self._Ap.append_row(list(self._free_point_buffer.keys()).index(f.tail), f.A2)
-        self._d.append(f.b)
-        self._marginalization_index[f.tail].append(len(self._d))
-
-    def to_sparse(self):
-        A = self._Ap.to_bsr()
-        d = np.block(self._d)
+    @property
+    def odometry_system(self):
+        A = self._B.to_bsr().tocsr()
+        d = np.block(self._t)
         return A, d
