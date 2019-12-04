@@ -95,21 +95,26 @@ class DynamicMeasurementSystem(object):
                     self._marginalize(oldest_point, 0)
 
     def _marginalize(self, point, col):
-        for A, b, array_index in [(self._A, self._d, self._array_index['d']),
-                                  (self._B, self._t, self._array_index['t'])]:
+        for debug_iter, (A, b, array_index) in enumerate([(self._A, self._d, self._array_index['d']),
+                                                          (self._B, self._t, self._array_index['t'])]):
             col_data = A.get_col(col)
             n_blocks = len(col_data)
-            if n_blocks == 0:
-                continue
-            n_rows = len(array_index[point])
-            assert (n_rows == n_blocks), "Expected %d blocks in column, got %d instead" % (n_rows, n_blocks)
-            for i, (row, block) in reversed(list(enumerate(col_data))):
-                b[array_index[point][i]] += np.dot(block, point.position)
-                A.remove_row(row)
+            if n_blocks > 0:
+                n_rows = len(array_index[point])
+                assert (n_rows == n_blocks), "Expected %d blocks in column, got %d instead" % (n_rows, n_blocks)
+                for i, (row, block) in reversed(list(enumerate(col_data))):
+                    b[array_index[point][i]] -= np.dot(block, point.position)
+                    # A.remove_row(row)
+                    A.insert_block(row, col, np.zeros_like(block))
+            A.remove_col(col)
 
     @property
     def observation_system(self):
-        A = sp.sparse.bmat([[None, None], [self._H.to_bsr(), self._A.to_bsr()]]).tocsr()
+        _H = self._H.to_bsr()
+        _A = self._A.to_bsr()
+        zero_fill = sp.sparse.bsr_matrix((_H.shape[0] - _A.shape[0], _A.shape[1]))
+
+        A = sp.sparse.bmat([[_H, sp.sparse.bmat([[zero_fill], [_A]])]]).tocsr()
         d = np.block(self._d)
         return A, d
 

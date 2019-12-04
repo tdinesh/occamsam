@@ -24,6 +24,23 @@ class TestSingleBlock(unittest.TestCase):
 
         self.assertTrue(np.allclose(bsr.todense(), sbrm.to_bsr().todense()))
 
+    # def test_insert_block(self):
+
+    #     nblocks = 10
+
+    #     np.random.seed(nblocks)
+    #     data = np.random.random((nblocks, 2, 3))
+    #     indices = np.random.randint(0, 7, size=nblocks)
+    #     indptr = np.arange(nblocks + 1)
+
+    #     sbrm = DBSRMatrix()
+    #     for i in range(nblocks):
+    #         sbrm.append_row(indices[i], data[i])
+
+    #     bsr = bsr_matrix((data, indices, indptr))
+
+    #     self.assertTrue(np.allclose(bsr.todense(), sbrm.to_bsr().todense()))
+
     def test_remove_row(self):
 
         nblocks = 12

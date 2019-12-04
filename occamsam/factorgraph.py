@@ -58,61 +58,61 @@ class GaussianFactorGraph(object):
         :return: d: Array of distance measurements
         """
 
-        observations = [(u, v, f) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, ObservationFactor)]
-        landmarks = [node for node in self._graph.nodes() if isinstance(node, LandmarkVariable)]
-        points = [node for node in self._graph.nodes() if isinstance(node, PointVariable)]
+        # observations = [(u, v, f) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, ObservationFactor)]
+        # landmarks = [node for node in self._graph.nodes() if isinstance(node, LandmarkVariable)]
+        # points = [node for node in self._graph.nodes() if isinstance(node, PointVariable)]
 
-        if self._free_point_window is None:
-            num_fixed = 0
-            num_free = len(points)
-        else:
-            num_updated = len([p for p in points if p.position is not None])
-            num_fixed = min(max(0, len(points) - self._free_point_window), num_updated)
-            num_free = len(points) - num_fixed
+        # if self._free_point_window is None:
+        #     num_fixed = 0
+        #     num_free = len(points)
+        # else:
+        #     num_updated = len([p for p in points if p.position is not None])
+        #     num_fixed = min(max(0, len(points) - self._free_point_window), num_updated)
+        #     num_free = len(points) - num_fixed
 
-        free_points = points[-num_free:] if num_free else []
-        fixed_points = points[:num_fixed]
+        # free_points = points[-num_free:] if num_free else []
+        # fixed_points = points[:num_fixed]
 
-        rows = np.sum([f.b.size for (u, v, f) in observations])
-        landmark_cols = np.sum([lm.dim for lm in landmarks])
-        free_cols = int(np.sum([pt.dim for pt in free_points]))
-        fix_cols = int(np.sum([pt.dim for pt in fixed_points]))
+        # rows = np.sum([f.b.size for (u, v, f) in observations])
+        # landmark_cols = np.sum([lm.dim for lm in landmarks])
+        # free_cols = int(np.sum([pt.dim for pt in free_points]))
+        # fix_cols = int(np.sum([pt.dim for pt in fixed_points]))
 
-        Am = sp.sparse.lil_matrix((rows, landmark_cols))
-        Ap = sp.sparse.lil_matrix((rows, free_cols))
-        Af = sp.sparse.lil_matrix((rows, fix_cols))
-        d = np.zeros(rows)
+        # Am = sp.sparse.lil_matrix((rows, landmark_cols))
+        # Ap = sp.sparse.lil_matrix((rows, free_cols))
+        # Af = sp.sparse.lil_matrix((rows, fix_cols))
+        # d = np.zeros(rows)
 
-        landmark_index = dict([(landmark, landmark.dim * i) for i, landmark in enumerate(landmarks)])
-        free_index = dict([(point, point.dim * i) for i, point in enumerate(free_points)])
-        fixed_index = dict([(point, point.dim * i) for i, point in enumerate(fixed_points)])
+        # landmark_index = dict([(landmark, landmark.dim * i) for i, landmark in enumerate(landmarks)])
+        # free_index = dict([(point, point.dim * i) for i, point in enumerate(free_points)])
+        # fixed_index = dict([(point, point.dim * i) for i, point in enumerate(fixed_points)])
 
-        ei = 0
-        for (u, v, f) in observations:
+        # ei = 0
+        # for (u, v, f) in observations:
 
-            k = f.b.size
+        #     k = f.b.size
 
-            vi = landmark_index[v]
-            Am[ei:ei + k, vi:vi + v.dim] = f.A1
-            d[ei:ei + k] = f.b
+        #     vi = landmark_index[v]
+        #     Am[ei:ei + k, vi:vi + v.dim] = f.A1
+        #     d[ei:ei + k] = f.b
 
-            if u in free_index.keys():
-                ui = free_index[u]
-                Ap[ei:ei + k, ui:ui + u.dim] = f.A2
-            else:
-                ui = fixed_index[u]
-                Af[ei:ei + k, ui:ui + u.dim] = f.A2
+        #     if u in free_index.keys():
+        #         ui = free_index[u]
+        #         Ap[ei:ei + k, ui:ui + u.dim] = f.A2
+        #     else:
+        #         ui = fixed_index[u]
+        #         Af[ei:ei + k, ui:ui + u.dim] = f.A2
 
-            ei += k
+        #     ei += k
 
-        if num_fixed > 0:
-            Af = Af.asformat('csr')
-            p = np.concatenate([np.array(p.position) for p in fixed_points])
-            d = Af.dot(p) + d
+        # if num_fixed > 0:
+        #     Af = Af.asformat('csr')
+        #     p = np.concatenate([np.array(p.position) for p in fixed_points])
+        #     d = Af.dot(p) + d
 
-        A = sp.sparse.hstack([Am, -Ap], format='csr')
+        # A = sp.sparse.hstack([Am, -Ap], format='csr')
 
-        A_, b_ = self._measurement_system.observation_system
+        # A_, b_ = self._measurement_system.observation_system
 
         return self._measurement_system.observation_system
 

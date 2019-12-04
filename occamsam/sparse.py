@@ -29,14 +29,18 @@ class DBSRMatrix(object):
             self.append_row(col, block)
             return
 
-        # TODO check if col already present in row
-        end_index = self._indptr[row + 1]
-        self._data.insert(end_index, block)
-        self._indices.insert(end_index, col)
+        row_cols = self._indices[self._indptr[row]:self._indptr[row + 1]]
+        if col in row_cols:
+            col_index = row_cols.index(col)
+            self._data[col_index] = block
+        else:
+            end_index = self._indptr[row + 1]
+            self._data.insert(end_index, block)
+            self._indices.insert(end_index, col)
 
-        indptr = np.array(self._indptr)
-        indptr[row + 1:] += 1
-        self._indptr = indptr.tolist()
+            indptr = np.array(self._indptr)
+            indptr[row + 1:] += 1
+            self._indptr = indptr.tolist()
 
     def remove_row(self, row):
 
