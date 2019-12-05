@@ -37,20 +37,23 @@ class DynamicMeasurementSystem(object):
         if isinstance(f, OdometryFactor):
 
             if len(self._t) == 0:
-                init_position = np.zeros(f.head.dim)
-                self._append_to_free_buffer(f.tail)
+                init_position = np.zeros(f.tail.dim)
+                if f.tail not in self._free_point_buffer:
+                    self._free_point_buffer[f.tail] = {}
                 self._array_index['t'][f.tail] = [0]
                 self._B.append_row(0, np.eye(len(init_position)))
                 self._t.append(init_position)
 
             index = len(self._t)
 
-            self._append_to_free_buffer(f.tail)
+            if f.tail not in self._free_point_buffer:
+                self._free_point_buffer[f.tail] = {}
             if f.tail not in self._array_index['t']:
                 self._array_index['t'][f.tail] = []
             self._array_index['t'][f.tail].append(index)
 
-            self._append_to_free_buffer(f.head)
+            if f.head not in self._free_point_buffer:
+                self._free_point_buffer[f.head] = {}
             if f.head not in self._array_index['t']:
                 self._array_index['t'][f.head] = []
             self._array_index['t'][f.head].append(index)
@@ -65,7 +68,8 @@ class DynamicMeasurementSystem(object):
             if f.head not in self._landmark_index:
                 self._landmark_index[f.head] = len(self._landmark_index)
 
-            self._append_to_free_buffer(f.tail)
+            if f.tail not in self._free_point_buffer:
+                self._free_point_buffer[f.tail] = {}
             if f.tail not in self._array_index['d']:
                 self._array_index['d'][f.tail] = []
             self._array_index['d'][f.tail].append(len(self._d))
@@ -77,12 +81,10 @@ class DynamicMeasurementSystem(object):
         else:
             raise TypeError
 
-    def _append_to_free_buffer(self, point):
+        self._maintain_buffers()
 
-        if point in self._free_point_buffer:
-            return
+    def _maintain_buffers(self):
 
-        self._free_point_buffer[point] = {}
         num_free = len(self._free_point_buffer)
         if num_free > self.max_free_points:
 
@@ -104,8 +106,8 @@ class DynamicMeasurementSystem(object):
                 assert (n_rows == n_blocks), "Expected %d blocks in column, got %d instead" % (n_rows, n_blocks)
                 for i, (row, block) in reversed(list(enumerate(col_data))):
                     b[array_index[point][i]] -= np.dot(block, point.position)
-                    # A.remove_row(row)
                     A.insert_block(row, col, np.zeros_like(block))
+                    del array_index[point][i]
             A.remove_col(col)
 
     @property
