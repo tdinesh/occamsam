@@ -18,6 +18,7 @@ class Simulator(object):
         self.num_classes = np.random.choice(10) + 1
 
         self.points = 10 * np.random.rand(self.num_points, self.point_dim)
+        self.points[0, :] = np.zeros(self.point_dim)
         self.landmarks = 10 * np.random.rand(self.num_landmarks, self.landmark_dim)
 
         self.landmark_labels = np.random.choice(self.num_classes, self.num_landmarks)

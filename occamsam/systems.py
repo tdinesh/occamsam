@@ -60,7 +60,7 @@ class DynamicMeasurementSystem(object):
 
             self._B.append_row([list(self._free_point_buffer.keys()).index(f.tail),
                                 list(self._free_point_buffer.keys()).index(f.head)],
-                               [f.A1, -f.A2])
+                               [-f.A2, f.A1])
             self._t.append(f.b)
 
         elif isinstance(f, ObservationFactor):
@@ -123,5 +123,5 @@ class DynamicMeasurementSystem(object):
     @property
     def odometry_system(self):
         A = self._B.to_bsr().tocsr()
-        d = np.block(self._t)
+        d = np.block(self._t)[-A.shape[0]:]
         return A, d

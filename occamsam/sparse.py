@@ -108,5 +108,5 @@ class DBSRMatrix(object):
 
         data = np.array(self._data)
         indices = np.array(self._indices)
-        indptr = np.arange(len(self._indices) + 1)
+        indptr = np.array(self._indptr)
         return sp.sparse.bsr_matrix((data, indices, indptr))

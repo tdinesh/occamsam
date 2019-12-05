@@ -135,62 +135,63 @@ class GaussianFactorGraph(object):
         :return: t: Array of translation measurements
         """
 
-        observations = [(u, v, f) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, OdometryFactor)]
-        points = [node for node in self._graph.nodes() if isinstance(node, PointVariable)]
+        # observations = [(u, v, f) for (u, v, f) in self._graph.edges.data('factor') if isinstance(f, OdometryFactor)]
+        # points = [node for node in self._graph.nodes() if isinstance(node, PointVariable)]
 
-        if self._free_point_window is None:
-            num_fixed = 0
-            num_free = len(points)
-        else:
-            num_updated = len([p for p in points if p.position is not None])
-            num_fixed = min(max(0, len(points) - self._free_point_window), num_updated)
-            num_free = len(points) - num_fixed
+        # if self._free_point_window is None:
+        #     num_fixed = 0
+        #     num_free = len(points)
+        # else:
+        #     num_updated = len([p for p in points if p.position is not None])
+        #     num_fixed = min(max(0, len(points) - self._free_point_window), num_updated)
+        #     num_free = len(points) - num_fixed
 
-        free_points = points[-num_free:] if num_free else []
-        fixed_points = points[:num_fixed]
+        # free_points = points[-num_free:] if num_free else []
+        # fixed_points = points[:num_fixed]
 
-        rows = np.sum([f.b.size for (u, v, f) in observations])
-        free_cols = int(np.sum([pt.dim for pt in free_points]))
-        fix_cols = int(np.sum([pt.dim for pt in fixed_points]))
+        # rows = np.sum([f.b.size for (u, v, f) in observations])
+        # free_cols = int(np.sum([pt.dim for pt in free_points]))
+        # fix_cols = int(np.sum([pt.dim for pt in fixed_points]))
 
-        Ap = sp.sparse.lil_matrix((rows, free_cols))
-        Af = sp.sparse.lil_matrix((rows, fix_cols))
-        t = np.zeros(rows)
+        # Ap = sp.sparse.lil_matrix((rows, free_cols))
+        # Af = sp.sparse.lil_matrix((rows, fix_cols))
+        # t = np.zeros(rows)
 
-        free_index = dict([(point, point.dim * i) for i, point in enumerate(free_points)])
-        fixed_index = dict([(point, point.dim * i) for i, point in enumerate(fixed_points)])
+        # free_index = dict([(point, point.dim * i) for i, point in enumerate(free_points)])
+        # fixed_index = dict([(point, point.dim * i) for i, point in enumerate(fixed_points)])
 
-        ei = 0
-        for (u, v, f) in observations:
+        # ei = 0
+        # for (u, v, f) in observations:
 
-            k = f.b.size
+        #     k = f.b.size
 
-            t[ei:ei + k] = f.b
+        #     t[ei:ei + k] = f.b
 
-            if v in free_index.keys():
-                vi = free_index[v]
-                Ap[ei:ei + k, vi:vi + v.dim] = f.A1
-            else:
-                vi = fixed_index[v]
-                Af[ei:ei + k, vi:vi + v.dim] = -f.A1
+        #     if v in free_index.keys():
+        #         vi = free_index[v]
+        #         Ap[ei:ei + k, vi:vi + v.dim] = f.A1
+        #     else:
+        #         vi = fixed_index[v]
+        #         Af[ei:ei + k, vi:vi + v.dim] = -f.A1
 
-            if u in free_index.keys():
-                ui = free_index[u]
-                Ap[ei:ei + k, ui:ui + u.dim] = -f.A2
-            else:
-                ui = fixed_index[u]
-                Af[ei:ei + k, ui:ui + u.dim] = f.A2
+        #     if u in free_index.keys():
+        #         ui = free_index[u]
+        #         Ap[ei:ei + k, ui:ui + u.dim] = -f.A2
+        #     else:
+        #         ui = fixed_index[u]
+        #         Af[ei:ei + k, ui:ui + u.dim] = f.A2
 
-            ei += k
+        #     ei += k
 
-        if num_fixed > 0:
-            Af = Af.asformat('csr')
-            p = np.concatenate([np.array(p.position) for p in fixed_points])
-            t = Af.dot(p) + t
+        # if num_fixed > 0:
+        #     Af = Af.asformat('csr')
+        #     p = np.concatenate([np.array(p.position) for p in fixed_points])
+        #     t = Af.dot(p) + t
 
-        A = Ap.asformat('csr')
+        # A = Ap.asformat('csr')
 
-        return A, t
+        # return A, t
+        return self._measurement_system.odometry_system
 
     @property
     def free_point_window(self):
