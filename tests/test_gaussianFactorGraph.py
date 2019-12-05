@@ -90,7 +90,7 @@ class TestOdometryArray(unittest.TestCase):
         fg.insert_simulation_factors(sim)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
+        t_sim = np.concatenate([np.zeros(1)] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -101,7 +101,7 @@ class TestOdometryArray(unittest.TestCase):
         fg.insert_simulation_factors(sim)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
+        t_sim = np.concatenate([np.zeros(3)] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -112,7 +112,7 @@ class TestOdometryArray(unittest.TestCase):
         fg.insert_simulation_factors(sim)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
+        t_sim = np.concatenate([np.zeros(3)] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -123,7 +123,7 @@ class TestOdometryArray(unittest.TestCase):
         fg.insert_simulation_factors(sim)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
+        t_sim = np.concatenate([np.zeros(1)] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
