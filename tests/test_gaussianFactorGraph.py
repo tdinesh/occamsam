@@ -708,7 +708,7 @@ class TestAccessSpeed(unittest.TestCase):
 
     def test_observation_speed(self):
 
-        sim = new_simulation(seed=2)
+        sim = new_simulation(seed=2, point_dim=3, landmark_dim=1)
         fg = factorgraph.GaussianFactorGraph(free_point_window=10)
 
         point_variables = [variable.PointVariable(sim.point_dim) for _ in range(sim.num_points)]
