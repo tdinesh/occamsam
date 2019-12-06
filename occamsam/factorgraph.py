@@ -214,7 +214,7 @@ class GaussianFactorGraph(object):
         nx.draw(self._graph)
         plt.show()
 
-    def insert_simulation_factors(self, sim, fixed_points=None):
+    def insert_simulation_factors(self, sim, fixed_points=[0]):
 
         point_variables = [variable.PointVariable(sim.point_dim) for _ in range(sim.num_points)]
         landmark_variables = [variable.LandmarkVariable(sim.landmark_dim, sim.landmark_labels[i])
@@ -225,9 +225,8 @@ class GaussianFactorGraph(object):
         observation_factors = [factor.ObservationFactor(point_variables[u], landmark_variables[v], H, d)
                                for (u, v), H, d in zip(*sim.observation_factors())]
 
-        if fixed_points is not None:
-            for index in fixed_points:
-                point_variables[index].position = sim.points[index, :]
+        for index in fixed_points:
+            point_variables[index].position = sim.points[index, :]
 
         i = 0
         j = 0

@@ -37,26 +37,22 @@ class DynamicMeasurementSystem(object):
         if isinstance(f, OdometryFactor):
 
             if len(self._t) == 0:
-                init_position = np.zeros(f.tail.dim)
-                if f.tail not in self._free_point_buffer:
-                    self._free_point_buffer[f.tail] = {}
+                if f.tail.position is None:
+                    init_position = np.zeros(f.tail.dim)
+                else:
+                    init_position = f.tail.position
+                self._append_to_free_buffer(f.tail)
                 self._array_index['t'][f.tail] = [0]
                 self._B.append_row(0, np.eye(len(init_position)))
                 self._t.append(init_position)
 
-            index = len(self._t)
+            row = len(self._t)
 
-            if f.tail not in self._free_point_buffer:
-                self._free_point_buffer[f.tail] = {}
-            if f.tail not in self._array_index['t']:
-                self._array_index['t'][f.tail] = []
-            self._array_index['t'][f.tail].append(index)
+            self._append_to_free_buffer(f.tail)
+            self._append_to_array_index(f.tail, row, 't')
 
-            if f.head not in self._free_point_buffer:
-                self._free_point_buffer[f.head] = {}
-            if f.head not in self._array_index['t']:
-                self._array_index['t'][f.head] = []
-            self._array_index['t'][f.head].append(index)
+            self._append_to_free_buffer(f.head)
+            self._append_to_array_index(f.head, row, 't')
 
             self._B.append_row([list(self._free_point_buffer.keys()).index(f.tail),
                                 list(self._free_point_buffer.keys()).index(f.head)],
@@ -68,11 +64,8 @@ class DynamicMeasurementSystem(object):
             if f.head not in self._landmark_index:
                 self._landmark_index[f.head] = len(self._landmark_index)
 
-            if f.tail not in self._free_point_buffer:
-                self._free_point_buffer[f.tail] = {}
-            if f.tail not in self._array_index['d']:
-                self._array_index['d'][f.tail] = []
-            self._array_index['d'][f.tail].append(len(self._d))
+            self._append_to_free_buffer(f.tail)
+            self._append_to_array_index(f.tail, len(self._d), 'd')
 
             self._H.append_row(self._landmark_index[f.head], f.A1)
             self._A.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2)
@@ -82,6 +75,16 @@ class DynamicMeasurementSystem(object):
             raise TypeError
 
         self._maintain_buffers()
+
+    def _append_to_free_buffer(self, point):
+        if point not in self._free_point_buffer:
+            self._free_point_buffer[point] = {}
+
+    def _append_to_array_index(self, point, row, meas_type):
+        assert (meas_type == 'd' or meas_type == 't'), "Invalid meas_type"
+        if point not in self._array_index[meas_type]:
+            self._array_index[meas_type][point] = []
+        self._array_index[meas_type][point].append(row)
 
     def _maintain_buffers(self):
 
