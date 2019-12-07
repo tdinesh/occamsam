@@ -17,7 +17,6 @@ class GaussianFactorGraph(object):
 
         self._measurement_system = DynamicMeasurementSystem(max_free_points=free_point_window)
 
-        # publicly access
         self.variables = self._graph.nodes()
         self.factors = self._graph.edges()
 

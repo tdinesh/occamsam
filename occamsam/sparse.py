@@ -96,7 +96,13 @@ class DBSRMatrix(object):
     def merge_col(self, src, dest):
         # TODO make this accept a list
 
+        assert (type(src) == type(dest)), "src and dest mismatched types"
         indices = np.array(self._indices)
+        if isinstance(src, (int, np.integer)):
+            pass
+        elif isinstance(src, (list, np.ndarray)):
+            pass
+
         indices[indices == src] = dest
         indices[indices > src] -= 1
         self._indices = indices.tolist()
