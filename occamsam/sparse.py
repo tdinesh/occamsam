@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 import scipy.sparse
+import itertools
 
 
 class DBSRMatrix(object):
@@ -13,15 +14,24 @@ class DBSRMatrix(object):
     def append_row(self, cols, blocks):
 
         if isinstance(cols, (int, np.integer)):
-            self._indptr.append(self._indptr[-1] + 1)
-            self._indices.append(cols)
-            self._data.append(blocks)
-        elif isinstance(cols, (list, np.ndarray)):
-            # TODO test this path
-            assert (len(cols) == len(blocks)), "columns and blocks must contain the same number of elements"
-            self._indptr.append(self._indptr[-1] + len(blocks))
-            self._indices.extend(cols)
-            self._data.extend(blocks)
+            cols = [cols]
+            blocks = [blocks]
+
+        assert isinstance(cols, (list, np.ndarray)), "Expected type %s for cols, got %s" % (list, type(cols))
+        assert isinstance(blocks, (list, np.ndarray)), "Expected type %s for blocks, got %s" % (list, type(blocks))
+        assert (len(cols) == len(blocks)), "cols and blocks must contain the same number of elements"
+
+        order = np.argsort(cols)
+        cols = cols[order]
+        blocks = blocks[order]
+
+        self._indptr.append(self._indptr[-1])
+        for col, group in itertools.groupby(zip(*(cols, blocks)), key=lambda x: x[0]):
+            self._indptr[-1] += 1
+            self._indices.append(col)
+            self._data.append(np.zeros_like(blocks[0]))
+            for _, block in group:
+                self._data[-1] += block
 
     def insert_block(self, row, col, block):
 
@@ -32,7 +42,7 @@ class DBSRMatrix(object):
         row_cols = self._indices[self._indptr[row]:self._indptr[row + 1]]
         if col in row_cols:
             col_index = row_cols.index(col)
-            self._data[col_index] = block
+            self._data[col_index] += block
         else:
             end_index = self._indptr[row + 1]
             self._data.insert(end_index, block)
@@ -93,16 +103,18 @@ class DBSRMatrix(object):
 
         return col_data
 
-    def merge_col(self, src, dest):
-        # TODO make this accept a list
+    def merge_cols(self, pair):
 
-        assert (type(src) == type(dest)), "src and dest mismatched types"
+        assert isinstance(pair, tuple), "Expected tuple for pair, got %s" % type(pair)
+        assert len(pair) == 2, "pair must be of length 2, got %d" % len(pair)
+
+        dest = min(pair)
+        src = max(pair)
+
+        if src == dest:
+            return
+
         indices = np.array(self._indices)
-        if isinstance(src, (int, np.integer)):
-            pass
-        elif isinstance(src, (list, np.ndarray)):
-            pass
-
         indices[indices == src] = dest
         indices[indices > src] -= 1
         self._indices = indices.tolist()
