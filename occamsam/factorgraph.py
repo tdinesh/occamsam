@@ -87,7 +87,6 @@ class GaussianFactorGraph(object):
 
         self._maintain_buffers()
 
-    # def contract_variables(self, u, v):
 
     def _append_to_free_buffer(self, point):
         """
