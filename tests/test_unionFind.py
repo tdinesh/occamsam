@@ -20,7 +20,7 @@ class TestUnionFind(unittest.TestCase):
         for pair in pairs:
             union_find.union(pair[0], pair[1])
 
-        uf_groups = set(frozenset(v) for v in union_find.sets().values())
+        uf_groups = set(frozenset(v) for v in union_find.set_map().values())
         set_diff = groups.symmetric_difference(uf_groups)
 
         self.assertTrue(len(set_diff) == 0)
@@ -38,7 +38,7 @@ class TestUnionFind(unittest.TestCase):
         for pair in pairs:
             union_find.union(pair[0], pair[1])
 
-        uf_groups = set(frozenset(v) for v in union_find.sets().values())
+        uf_groups = set(frozenset(v) for v in union_find.set_map().values())
         set_diff = groups.symmetric_difference(uf_groups)
 
         self.assertTrue(len(set_diff) == 0)

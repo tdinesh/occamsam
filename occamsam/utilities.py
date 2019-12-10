@@ -33,11 +33,14 @@ class UnionFind(object):
         if self._rank[x_root] is self._rank[y_root]:
             self._rank[x_root] += 1
 
-    def sets(self):
-        set_map = {}
+    def set_map(self):
+        d = {}
         for k, v in self._parent.items():
-            set_map.setdefault(v, list()).append(k)
-        return set_map
+            d.setdefault(v, list()).append(k)
+        return d
+
+    def root_map(self):
+        return self._parent.copy()
 
 
 def random_groups(n, k):
