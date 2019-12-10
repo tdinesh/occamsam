@@ -1,3 +1,8 @@
+from itertools import combinations, chain
+
+import numpy as np
+
+
 class UnionFind(object):
 
     def __init__(self):
@@ -33,3 +38,41 @@ class UnionFind(object):
         for k, v in self._parent.items():
             set_map.setdefault(v, list()).append(k)
         return set_map
+
+
+def random_groups(n, k):
+    elements = np.arange(n)
+
+    indptr = [0] + np.sort(np.random.choice(np.arange(1, n), size=k - 1, replace=False)).tolist() + [n]
+    indices = np.random.permutation(elements)
+    groups = []
+    for i in range(k):
+        groups.append(frozenset(np.sort(indices[indptr[i]:indptr[i + 1]]).tolist()))
+    return set(groups)
+
+
+def sample_pairs(groups):
+    pairs = []
+    for g in groups:
+
+        if len(g) < 2:
+            continue
+
+        all_pairs = list(combinations(g, 2))
+        random_sample = iter(np.random.permutation(np.arange(len(all_pairs))))
+
+        uncovered = g.copy()
+        pair = np.random.permutation(all_pairs[next(random_sample)]).tolist()
+        uncovered = uncovered.difference(set(pair))
+        pairs.append(pair)
+
+        while len(uncovered) > 0:
+            next_sample = next(random_sample)
+            pair = np.random.permutation(all_pairs[next_sample]).tolist()
+            if pair[0] in uncovered and pair[1] in uncovered:
+                random_sample = chain(random_sample, [next_sample])
+                continue
+            uncovered = uncovered.difference(set(pair))
+            pairs.append(pair)
+
+    return pairs
