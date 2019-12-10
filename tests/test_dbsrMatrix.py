@@ -133,6 +133,27 @@ class TestMultiBlock(unittest.TestCase):
 
         self.assertTrue(np.allclose(bsr.todense(), sbrm.to_bsr().todense()))
 
+    def test_construction_list(self):
+
+        nblocks = 25
+        nrows = 11
+
+        np.random.seed(nblocks)
+
+        data = np.random.random((nblocks, 2, 3))
+        indices = np.random.randint(0, 7, size=nblocks)
+        indptr = np.array(
+            [0] + np.sort(np.random.choice(np.arange(1, nblocks - 1), size=nrows - 1, replace=False)).tolist() + [
+                nblocks])
+
+        sbrm = DBSRMatrix()
+        for i in range(nrows):
+            sbrm.append_row(indices[indptr[i]:indptr[i + 1]].tolist(), data[indptr[i]:indptr[i + 1]].tolist())
+
+        bsr = bsr_matrix((data, indices, indptr))
+
+        self.assertTrue(np.allclose(bsr.todense(), sbrm.to_bsr().todense()))
+
     def test_construction_column_repeat(self):
 
         nblocks = 50

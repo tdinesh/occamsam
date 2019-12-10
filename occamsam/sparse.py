@@ -14,11 +14,14 @@ class DBSRMatrix(object):
     def append_row(self, cols, blocks):
 
         if isinstance(cols, (int, np.integer)):
-            cols = [cols]
-            blocks = [blocks]
+            cols = np.array([cols])
+            blocks = np.array([blocks])
+        elif isinstance(cols, list):
+            cols = np.array(cols)
+            blocks = np.array(blocks)
 
-        assert isinstance(cols, (list, np.ndarray)), "Expected type %s for cols, got %s" % (list, type(cols))
-        assert isinstance(blocks, (list, np.ndarray)), "Expected type %s for blocks, got %s" % (list, type(blocks))
+        assert isinstance(cols, np.ndarray), "Expected type %s for cols, got %s" % (list, type(cols))
+        assert isinstance(blocks, np.ndarray), "Expected type %s for blocks, got %s" % (list, type(blocks))
         assert (len(cols) == len(blocks)), "cols and blocks must contain the same number of elements"
 
         order = np.argsort(cols)
