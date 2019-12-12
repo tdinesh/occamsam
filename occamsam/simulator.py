@@ -41,7 +41,7 @@ class Simulator(object):
             landmarks[g_list, :] = unique_landmarks[i, :]
             landmark_labels[g_list] = unique_landmark_labels[i]
             landmark_orientation[g_list, :, :] = unique_landmark_orientation[i]
-        assert np.all(landmark_labels > -1), "Error unset landmark_labels"
+        assert np.all(landmark_labels > -1), "Unset landmark_labels"
 
         landmark_ids, point_ids = np.meshgrid(np.arange(self.num_landmarks), np.arange(self.num_points))
         landmark_ids, point_ids = np.ravel(landmark_ids), np.ravel(point_ids)
@@ -58,6 +58,7 @@ class Simulator(object):
         landmark_order = list(OrderedDict.fromkeys(observation_landmarks))
         reindexing_map = -np.ones(self.num_landmarks, dtype=np.int)
         reindexing_map[landmark_order] = np.arange(self.num_landmarks)
+        assert np.all(reindexing_map > -1), "Unset index in reindexing_map"
         self.landmarks = landmarks[landmark_order, :]
         self.landmark_labels = landmark_labels[landmark_order]
         self.landmark_orientation = landmark_orientation[landmark_order, :, :]
