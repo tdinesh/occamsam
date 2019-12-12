@@ -15,20 +15,30 @@ class Simulator(object):
         self.num_points = num_points
         self.num_landmarks = num_landmarks
 
+        self.num_unique_landmarks = int(0.2 * self.num_landmarks)
         self.num_classes = np.random.choice(10) + 1
 
         self.points = 10 * np.random.rand(self.num_points, self.point_dim)
-        self.landmarks = 10 * np.random.rand(self.num_landmarks, self.landmark_dim)
-
-        self.landmark_labels = np.random.choice(self.num_classes, self.num_landmarks)
-
-        ortho_group = sp.stats.ortho_group
+        unique_landmarks = 10 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
+        unique_landmark_labels = np.random.choice(self.num_classes, self.num_unique_landmarks)
         if self.point_dim > 1:
-            self.principal_dirs = [ortho_group.rvs(self.point_dim)[:self.landmark_dim, :] for _ in range(self.num_classes)]
+            ortho_group = sp.stats.ortho_group
+            principal_dirs = [ortho_group.rvs(self.point_dim)[:self.landmark_dim, :] for _ in range(self.num_classes)]
         else:
             rvs = [np.random.rand(self.landmark_dim, 1) for _ in range(self.num_classes)]
-            self.principal_dirs = [np.divide(x, np.linalg.norm(x)) for x in rvs]
-        self.landmark_orientation = [self.principal_dirs[label] for label in self.landmark_labels]
+            principal_dirs = [np.divide(x, np.linalg.norm(x)) for x in rvs]
+        unique_landmark_orientation = np.array([principal_dirs[label] for label in unique_landmark_labels])
+
+        equivalence_groups = random_groups(self.num_landmarks, self.num_unique_landmarks)
+        self.landmarks = np.zeros((self.num_landmarks, self.landmark_dim))
+        self.landmark_labels = -np.ones(self.num_landmarks)
+        self.landmark_orientation = np.zeros((self.num_landmarks, self.landmark_dim, self.point_dim))
+        for i, group in enumerate(equivalence_groups):
+            g_list = list(group)
+            self.landmarks[g_list, :] = unique_landmarks[i, :]
+            self.landmark_labels[g_list] = unique_landmark_labels[i]
+            self.landmark_orientation[g_list, :, :] = unique_landmark_orientation[i]
+        assert np.all(self.landmark_labels > -1), "Error unset landmark_labels"
 
         point_ids = np.arange(self.num_points).tolist()
         self.odometry_pairs = list(zip(point_ids, point_ids[1:]))
@@ -38,7 +48,7 @@ class Simulator(object):
         uncovered_landmarks = set(np.arange(self.num_landmarks))
         all_observation_ids = iter(np.random.permutation(self.num_points * self.num_landmarks))
         self.observation_pairs = []
-        while len(uncovered_landmarks) > 0:
+        while len(uncovered_landmarks) > 0 or len(self.observation_pairs) < 2 * self.num_points:
             i = next(all_observation_ids)
             self.observation_pairs.append((point_ids[i], landmark_ids[i]))
             uncovered_landmarks = uncovered_landmarks.difference({landmark_ids[i]})
@@ -73,7 +83,7 @@ class Simulator(object):
 
 MAX_DIM = 3
 MAX_POINTS = 2000
-MAX_LANDMARKS = 100
+MAX_LANDMARKS = 500
 
 
 def new_simulation(point_dim=None, landmark_dim=None, num_points=None, num_landmarks=None, seed=None):
