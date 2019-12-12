@@ -137,7 +137,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -149,7 +149,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -161,7 +161,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -173,7 +173,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -189,8 +189,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -206,8 +205,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -223,8 +221,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -240,8 +237,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -257,8 +253,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -274,8 +269,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -291,8 +285,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -308,8 +301,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -325,8 +317,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -342,8 +333,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -359,8 +349,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -376,8 +365,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -393,8 +381,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks[sim.observed_landmarks, :]),
-                            np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -410,7 +397,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.ravel(sim.landmarks[sim.observed_landmarks, :])
+        x = np.ravel(sim.landmarks)
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -426,7 +413,7 @@ class TestObservationSystem(unittest.TestCase):
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 
         A, b = fg.observation_system
-        x = np.ravel(sim.landmarks[sim.observed_landmarks, :])
+        x = np.ravel(sim.landmarks)
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])

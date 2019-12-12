@@ -19,6 +19,9 @@ class Simulator(object):
         self.num_classes = np.random.choice(10) + 1
 
         self.points = 10 * np.random.rand(self.num_points, self.point_dim)
+        point_ids = np.arange(self.num_points).tolist()
+        self.odometry_pairs = list(zip(point_ids, point_ids[1:]))
+
         unique_landmarks = 10 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
         unique_landmark_labels = np.random.choice(self.num_classes, self.num_unique_landmarks)
         if self.point_dim > 1:
@@ -30,32 +33,36 @@ class Simulator(object):
         unique_landmark_orientation = np.array([principal_dirs[label] for label in unique_landmark_labels])
 
         equivalence_groups = random_groups(self.num_landmarks, self.num_unique_landmarks)
-        self.landmarks = np.zeros((self.num_landmarks, self.landmark_dim))
-        self.landmark_labels = -np.ones(self.num_landmarks)
-        self.landmark_orientation = np.zeros((self.num_landmarks, self.landmark_dim, self.point_dim))
+        landmarks = np.zeros((self.num_landmarks, self.landmark_dim))
+        landmark_labels = -np.ones(self.num_landmarks)
+        landmark_orientation = np.zeros((self.num_landmarks, self.landmark_dim, self.point_dim))
         for i, group in enumerate(equivalence_groups):
             g_list = list(group)
-            self.landmarks[g_list, :] = unique_landmarks[i, :]
-            self.landmark_labels[g_list] = unique_landmark_labels[i]
-            self.landmark_orientation[g_list, :, :] = unique_landmark_orientation[i]
-        assert np.all(self.landmark_labels > -1), "Error unset landmark_labels"
-
-        point_ids = np.arange(self.num_points).tolist()
-        self.odometry_pairs = list(zip(point_ids, point_ids[1:]))
+            landmarks[g_list, :] = unique_landmarks[i, :]
+            landmark_labels[g_list] = unique_landmark_labels[i]
+            landmark_orientation[g_list, :, :] = unique_landmark_orientation[i]
+        assert np.all(landmark_labels > -1), "Error unset landmark_labels"
 
         landmark_ids, point_ids = np.meshgrid(np.arange(self.num_landmarks), np.arange(self.num_points))
         landmark_ids, point_ids = np.ravel(landmark_ids), np.ravel(point_ids)
         uncovered_landmarks = set(np.arange(self.num_landmarks))
         all_observation_ids = iter(np.random.permutation(self.num_points * self.num_landmarks))
-        self.observation_pairs = []
-        while len(uncovered_landmarks) > 0 or len(self.observation_pairs) < 2 * self.num_points:
+        observation_pairs = []
+        while len(uncovered_landmarks) > 0 or len(observation_pairs) < 2 * self.num_points:
             i = next(all_observation_ids)
-            self.observation_pairs.append((point_ids[i], landmark_ids[i]))
+            observation_pairs.append((point_ids[i], landmark_ids[i]))
             uncovered_landmarks = uncovered_landmarks.difference({landmark_ids[i]})
-        self.observation_pairs = sorted(self.observation_pairs, key=lambda x: x[0])
-        self.num_observations = len(self.observation_pairs)
+        observation_pairs = sorted(observation_pairs, key=lambda x: x[0])
 
-        self.observed_landmarks = list(OrderedDict.fromkeys(list(zip(*self.observation_pairs))[1]))
+        self.num_observations = len(observation_pairs)
+        observation_points, observation_landmarks = list(zip(*observation_pairs))
+        landmark_order = list(OrderedDict.fromkeys(observation_landmarks))
+        reindexing_map = -np.ones(self.num_landmarks, dtype=np.int)
+        reindexing_map[landmark_order] = np.arange(self.num_landmarks)
+        self.landmarks = landmarks[landmark_order, :]
+        self.landmark_labels = landmark_labels[landmark_order]
+        self.landmark_orientation = landmark_orientation[landmark_order, :, :]
+        self.observation_pairs = list(zip(list(observation_points), reindexing_map[list(observation_landmarks)]))
 
     def odometry_factors(self):
 
@@ -69,7 +76,6 @@ class Simulator(object):
               for i, (u, v) in enumerate(self.odometry_pairs)]
 
         return self.odometry_pairs, rs, ts
-
 
     def observation_factors(self):
 
