@@ -170,7 +170,16 @@ class GaussianFactorGraph(object):
                     del array_index[point][i]
             A.remove_col(col)
 
-    def merge_landmarks(self, src, dest):
+    def optimize(self):
+
+        # NOTE: Carefully consider how to expose merge_landmark functionality to the outside....
+
+        # enumerate (point, index) pairs from landmark_index
+
+        # sort each group in union_find.set_map().values() using pair map
+
+        #
+
         pass
 
     @property
@@ -196,9 +205,14 @@ class GaussianFactorGraph(object):
 
         _H = self._H.to_bsr()
         _A = self._A.to_bsr()
-        zero_fill = sp.sparse.bsr_matrix((_H.shape[0] - _A.shape[0], _A.shape[1]))
 
-        A = sp.sparse.bmat([[_H, sp.sparse.bmat([[zero_fill], [_A]])]]).tocsr()
+        n_missing_cols = (_A.blocksize[1] * len(self._free_point_buffer)) - _A.shape[1]
+        col_padding = sp.sparse.bsr_matrix((_A.shape[0], n_missing_cols))
+
+        n_missing_rows = _H.shape[0] - _A.shape[0]
+        row_padding = sp.sparse.bsr_matrix((n_missing_rows, _A.shape[1]))
+
+        A = sp.sparse.bmat([[_H, sp.sparse.bmat([[row_padding, None], [_A, col_padding]])]]).tocsr()
         d = np.block(self._d)
         return A, d
 

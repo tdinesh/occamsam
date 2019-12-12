@@ -320,7 +320,7 @@ class TestObservationSystem(unittest.TestCase):
         num_fixed_points = 1200
         num_free_points = 500
 
-        sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=234)
+        sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=234)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 

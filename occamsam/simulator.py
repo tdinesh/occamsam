@@ -1,8 +1,9 @@
 import numpy as np
 import scipy as sp
 import scipy.stats
-
 from collections import OrderedDict
+
+from utilities import random_groups
 
 
 class Simulator(object):
@@ -14,7 +15,6 @@ class Simulator(object):
         self.num_points = num_points
         self.num_landmarks = num_landmarks
 
-        self.num_observations = int(np.round(self.num_points * self.num_landmarks * 0.1))
         self.num_classes = np.random.choice(10) + 1
 
         self.points = 10 * np.random.rand(self.num_points, self.point_dim)
@@ -30,15 +30,22 @@ class Simulator(object):
             self.principal_dirs = [np.divide(x, np.linalg.norm(x)) for x in rvs]
         self.landmark_orientation = [self.principal_dirs[label] for label in self.landmark_labels]
 
-        pids = np.arange(self.num_points).tolist()
-        self.odometry_pairs = list(zip(pids, pids[1:]))
+        point_ids = np.arange(self.num_points).tolist()
+        self.odometry_pairs = list(zip(point_ids, point_ids[1:]))
 
-        lids, pids = np.meshgrid(np.arange(self.num_landmarks), np.arange(self.num_points))
-        lids, pids = np.ravel(lids), np.ravel(pids)
-        rids = np.sort(np.random.choice(self.num_points * self.num_landmarks, self.num_observations, replace=False))
-        self.observation_pairs = list(zip(pids[rids].tolist(), lids[rids].tolist()))
+        landmark_ids, point_ids = np.meshgrid(np.arange(self.num_landmarks), np.arange(self.num_points))
+        landmark_ids, point_ids = np.ravel(landmark_ids), np.ravel(point_ids)
+        uncovered_landmarks = set(np.arange(self.num_landmarks))
+        all_observation_ids = iter(np.random.permutation(self.num_points * self.num_landmarks))
+        self.observation_pairs = []
+        while len(uncovered_landmarks) > 0:
+            i = next(all_observation_ids)
+            self.observation_pairs.append((point_ids[i], landmark_ids[i]))
+            uncovered_landmarks = uncovered_landmarks.difference({landmark_ids[i]})
+        self.observation_pairs = sorted(self.observation_pairs, key=lambda x: x[0])
+        self.num_observations = len(self.observation_pairs)
 
-        self.observed_landmarks = list(OrderedDict.fromkeys(lids[rids].tolist()))
+        self.observed_landmarks = list(OrderedDict.fromkeys(list(zip(*self.observation_pairs))[1]))
 
     def odometry_factors(self):
 
