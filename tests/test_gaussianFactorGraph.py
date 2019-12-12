@@ -180,11 +180,11 @@ class TestObservationSystem(unittest.TestCase):
         self.assertTrue(np.allclose(A.dot(x), b))
 
     def test_marginal_small(self):
-        num_points = 20
+        num_points = 100
         num_fixed_points = 15
         num_free_points = num_points - num_fixed_points
 
-        sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, num_landmarks=5, seed=221)
+        sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, num_landmarks=20, seed=221)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
         fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
 

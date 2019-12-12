@@ -87,7 +87,6 @@ class GaussianFactorGraph(object):
 
         self._maintain_buffers()
 
-
     def _append_to_free_buffer(self, point):
         """
         Appends the point variable point to the buffer of free points, which are all the point variables whose positions

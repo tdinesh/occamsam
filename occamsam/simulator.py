@@ -54,7 +54,6 @@ class Simulator(object):
             uncovered_landmarks = uncovered_landmarks.difference({landmark_ids[i]})
         observation_pairs = sorted(observation_pairs, key=lambda x: x[0])
 
-        self.num_observations = len(observation_pairs)
         observation_points, observation_landmarks = list(zip(*observation_pairs))
         landmark_order = list(OrderedDict.fromkeys(observation_landmarks))
         reindexing_map = -np.ones(self.num_landmarks, dtype=np.int)
@@ -63,6 +62,9 @@ class Simulator(object):
         self.landmark_labels = landmark_labels[landmark_order]
         self.landmark_orientation = landmark_orientation[landmark_order, :, :]
         self.observation_pairs = list(zip(list(observation_points), reindexing_map[list(observation_landmarks)]))
+        self.num_observations = len(self.observation_pairs)
+
+        self.equivalence_groups = [frozenset(reindexing_map[list(group)]) for group in equivalence_groups]
 
     def odometry_factors(self):
 
