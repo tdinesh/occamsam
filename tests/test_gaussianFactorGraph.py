@@ -691,6 +691,36 @@ class TestOdometrySystem(unittest.TestCase):
         self.assertEqual(0, A.shape[1])
 
 
+class TestMerge(unittest.TestCase):
+
+    def test_merge_once(self):
+        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=30, num_landmarks=20, seed=12)
+        fg = factorgraph.GaussianFactorGraph()
+        fg.insert_simulation_factors(sim)
+
+        landmark_variables = list(fg._landmark_buffer.keys())
+        landmark_pairs = [(landmark_variables[i], landmark_variables[j]) for i, j in sim.equivalence_pairs]
+
+        fg._merge_landmarks(landmark_pairs)
+        unique_landmark_variables = list(fg._landmark_buffer.keys())
+        unique_order = [unique_landmark_variables.index(landmark_variables[i]) for i in
+                        sim.correspondence_map.set_map().keys()]
+
+        self.assertEqual(len(fg._correspondence_map.set_map().keys()), sim.num_unique_landmarks)
+        fg_groups = set(frozenset(g) for g in fg._correspondence_map.set_map().values())
+        sim_groups = set(
+            frozenset(landmark_variables[i] for i in g_ids) for g_ids in sim.correspondence_map.set_map().values())
+        diff = sim_groups.symmetric_difference(fg_groups)
+        self.assertTrue(len(diff) == 0)
+
+        A, b = fg.observation_system
+        x = np.concatenate((np.ravel(sim.unique_landmarks)[unique_order], np.ravel(sim.points)))
+
+        self.assertEqual(b.size, A.shape[0])
+        self.assertEqual(x.size, A.shape[1])
+        self.assertTrue(np.allclose(A.dot(x), b))
+
+
 class TestAccessSpeed(unittest.TestCase):
 
     def test_observation_speed(self):

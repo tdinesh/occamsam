@@ -3,7 +3,7 @@ import scipy as sp
 import scipy.stats
 from collections import OrderedDict
 
-from utilities import random_groups
+from utilities import random_groups, sample_pairs, UnionFind
 
 
 class Simulator(object):
@@ -22,7 +22,7 @@ class Simulator(object):
         point_ids = np.arange(self.num_points).tolist()
         self.odometry_pairs = list(zip(point_ids, point_ids[1:]))
 
-        unique_landmarks = 10 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
+        self.unique_landmarks = 10 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
         unique_landmark_labels = np.random.choice(self.num_classes, self.num_unique_landmarks)
         if self.point_dim > 1:
             ortho_group = sp.stats.ortho_group
@@ -36,11 +36,13 @@ class Simulator(object):
         landmarks = np.zeros((self.num_landmarks, self.landmark_dim))
         landmark_labels = -np.ones(self.num_landmarks)
         landmark_orientation = np.zeros((self.num_landmarks, self.landmark_dim, self.point_dim))
+        unique_index_map = -np.ones(self.num_landmarks, dtype=np.int)
         for i, group in enumerate(equivalence_groups):
             g_list = list(group)
-            landmarks[g_list, :] = unique_landmarks[i, :]
+            landmarks[g_list, :] = self.unique_landmarks[i, :]
             landmark_labels[g_list] = unique_landmark_labels[i]
             landmark_orientation[g_list, :, :] = unique_landmark_orientation[i]
+            unique_index_map[g_list] = i
         assert np.all(landmark_labels > -1), "Unset landmark_labels"
 
         landmark_ids, point_ids = np.meshgrid(np.arange(self.num_landmarks), np.arange(self.num_points))
@@ -66,6 +68,13 @@ class Simulator(object):
         self.num_observations = len(self.observation_pairs)
 
         self.equivalence_groups = [frozenset(reindexing_map[list(group)]) for group in equivalence_groups]
+        self.equivalence_pairs = sample_pairs(self.equivalence_groups)
+        self.correspondence_map = UnionFind()
+        for i in range(self.num_landmarks):
+            self.correspondence_map.insert(i)
+        for i, j in self.equivalence_pairs:
+            self.correspondence_map.union(i, j)
+
 
     def odometry_factors(self):
 

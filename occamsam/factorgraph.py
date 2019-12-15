@@ -5,11 +5,10 @@ import scipy.sparse
 import networkx as nx
 from collections import OrderedDict
 
-import factor
-import variable
 from factor import LinearFactor, ObservationFactor, OdometryFactor
 from variable import LandmarkVariable, PointVariable
 from sparse import DBSRMatrix
+from utilities import UnionFind
 
 
 class GaussianFactorGraph(object):
@@ -32,12 +31,14 @@ class GaussianFactorGraph(object):
         self._A = DBSRMatrix()
         self._B = DBSRMatrix()
 
-        self._landmark_list = OrderedDict()  # map of landmark variables to their associated column in H
+        self._landmark_buffer = OrderedDict()  # map of landmark variables to their associated column in H
         self._H = DBSRMatrix()
 
         self._array_index = {'d': {}, 't': {}}  # map of point variables to rows in which they participate in a factor
         self._d = []
         self._t = []
+
+        self._correspondence_map = UnionFind()
 
     def add_factor(self, f):
         """
@@ -74,11 +75,11 @@ class GaussianFactorGraph(object):
 
         elif isinstance(f, ObservationFactor):
 
-            self._append_to_landmark_list(f.head)
+            self._append_to_landmark_buffer(f.head)
             self._append_to_free_buffer(f.tail)
             self._append_to_array_index(f.tail, len(self._d), 'd')
 
-            self._H.append_row(list(self._landmark_list.keys()).index(f.head), f.A1)
+            self._H.append_row(list(self._landmark_buffer.keys()).index(self._correspondence_map.find(f.head)), f.A1)
             self._A.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2)
             self._d.append(f.b)
 
@@ -98,16 +99,18 @@ class GaussianFactorGraph(object):
         assert isinstance(point, PointVariable), "Expected type PointVariable, got %s instead" % type(point)
         self._free_point_buffer[point] = None
 
-    def _append_to_landmark_list(self, landmark):
+    def _append_to_landmark_buffer(self, landmark):
         """
-        Appends the point variable point to the buffer of free points, which are all the point variables whose positions
-        are yet unknown and will be optimized over
+        Appends the landmark variable point to a buffer, where a landmarks position in the buffer corresponds to its index
+        in the H matrix
 
         :param landmark: landmark variable
         """
 
         assert isinstance(landmark, LandmarkVariable), "Expected type LandmarkVariable, got %s instead" % type(landmark)
-        self._landmark_list[landmark] = None
+        self._landmark_buffer[landmark] = None
+        self._correspondence_map.insert(landmark)
+
 
     def _append_to_array_index(self, point, row, meas_type):
         """
@@ -181,6 +184,27 @@ class GaussianFactorGraph(object):
 
         pass
 
+    def _merge_landmarks(self, pairs):
+
+        for u, v in pairs:
+            self._correspondence_map.union(u, v)
+
+        set_map = self._correspondence_map.set_map()
+        for super_landmark in set_map:
+            landmark_index_map = dict((k, i) for i, k in enumerate(self._landmark_buffer.keys()))
+            correspondence_set = set(set_map[super_landmark])
+            unmerged_landmarks = correspondence_set.intersection(self._landmark_buffer.keys()).difference(
+                {super_landmark})
+            super_landmark_index = landmark_index_map[super_landmark]
+            unmerged_landmark_index = sorted([landmark_index_map[x] for x in unmerged_landmarks])
+            for i in unmerged_landmark_index:
+                self._H.copy_col(i, super_landmark_index)
+            for i in reversed(unmerged_landmark_index):
+                self._H.remove_col(i)
+            for landmark in unmerged_landmarks:
+                self._landmark_buffer.pop(landmark, None)
+
+
     @property
     def observation_system(self):
         """
@@ -252,13 +276,13 @@ class GaussianFactorGraph(object):
 
     def insert_simulation_factors(self, sim, fixed_points=[0]):
 
-        point_variables = [variable.PointVariable(sim.point_dim) for _ in range(sim.num_points)]
-        landmark_variables = [variable.LandmarkVariable(sim.landmark_dim, sim.landmark_labels[i])
+        point_variables = [PointVariable(sim.point_dim) for _ in range(sim.num_points)]
+        landmark_variables = [LandmarkVariable(sim.landmark_dim, sim.landmark_labels[i])
                               for i in range(sim.num_landmarks)]
 
-        odometry_factors = [factor.OdometryFactor(point_variables[u], point_variables[v], R, t)
+        odometry_factors = [OdometryFactor(point_variables[u], point_variables[v], R, t)
                             for (u, v), R, t in zip(*sim.odometry_factors())]
-        observation_factors = [factor.ObservationFactor(point_variables[u], landmark_variables[v], H, d)
+        observation_factors = [ObservationFactor(point_variables[u], landmark_variables[v], H, d)
                                for (u, v), H, d in zip(*sim.observation_factors())]
 
         for index in fixed_points:
