@@ -35,8 +35,8 @@ class UnionFind(object):
 
     def set_map(self):
         d = {}
-        for k, v in self._parent.items():
-            d.setdefault(v, list()).append(k)
+        for k in self._parent:
+            d.setdefault(self.find(k), list()).append(k)
         return d
 
     def root_map(self):
@@ -77,5 +77,8 @@ def sample_pairs(groups):
                 continue
             uncovered = uncovered.difference(set(pair))
             pairs.append(pair)
+
+    shuffle_order = np.random.permutation(len(pairs)).tolist()
+    pairs = [pairs[i] for i in shuffle_order]
 
     return pairs

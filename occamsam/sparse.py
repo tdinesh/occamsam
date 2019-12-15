@@ -122,6 +122,15 @@ class DBSRMatrix(object):
         indices[indices > src] -= 1
         self._indices = indices.tolist()
 
+    def copy_col(self, src, dest):
+        assert isinstance(dest, (int, np.int)), "Expected integer for dest, got %s" % type(dest)
+        assert isinstance(src, (int, np.int)), "Expected integer for src, got %s" % type(src)
+
+        if src == dest:
+            return
+
+        self._indices = [dest if x == src else x for x in self._indices]
+
     def to_bsr(self):
 
         if len(self._data) == 0:
