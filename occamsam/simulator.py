@@ -74,6 +74,7 @@ class Simulator(object):
             self.correspondence_map.insert(i)
         for i, j in self.equivalence_pairs:
             self.correspondence_map.union(i, j)
+        self.unique_index_map = unique_index_map[landmark_order]
 
 
     def odometry_factors(self):

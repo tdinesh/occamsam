@@ -694,7 +694,7 @@ class TestOdometrySystem(unittest.TestCase):
 class TestMerge(unittest.TestCase):
 
     def test_merge_once(self):
-        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=30, num_landmarks=20, seed=12)
+        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=30, num_landmarks=30, seed=12)
         fg = factorgraph.GaussianFactorGraph()
         fg.insert_simulation_factors(sim)
 
@@ -703,8 +703,7 @@ class TestMerge(unittest.TestCase):
 
         fg._merge_landmarks(landmark_pairs)
         unique_landmark_variables = list(fg._landmark_buffer.keys())
-        unique_order = [unique_landmark_variables.index(landmark_variables[i]) for i in
-                        sim.correspondence_map.set_map().keys()]
+        unique_order = [sim.unique_index_map[landmark_variables.index(k)] for k in unique_landmark_variables]
 
         self.assertEqual(len(fg._correspondence_map.set_map().keys()), sim.num_unique_landmarks)
         fg_groups = set(frozenset(g) for g in fg._correspondence_map.set_map().values())
