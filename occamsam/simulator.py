@@ -3,10 +3,12 @@ import scipy as sp
 import scipy.stats
 from collections import OrderedDict
 
+from variable import PointVariable, LandmarkVariable
+from factor import OdometryFactor, ObservationFactor
 from utilities import random_groups, sample_pairs, UnionFind
 
 
-class Simulator(object):
+class Simulation(object):
 
     def __init__(self, point_dim, landmark_dim, num_points, num_landmarks):
 
@@ -76,8 +78,7 @@ class Simulator(object):
             self.correspondence_map.union(i, j)
         self.unique_index_map = unique_index_map[landmark_order]
 
-
-    def odometry_factors(self):
+    def odometry_measurements(self):
 
         if self.point_dim > 1:
             ortho_group = sp.stats.ortho_group
@@ -90,7 +91,7 @@ class Simulator(object):
 
         return self.odometry_pairs, rs, ts
 
-    def observation_factors(self):
+    def observation_measurements(self):
 
         hs = [self.landmark_orientation[v] for _, v in self.observation_pairs]
 
@@ -98,6 +99,33 @@ class Simulator(object):
               for (u, v) in self.observation_pairs]
 
         return self.observation_pairs, hs, ds
+
+    def factors(self, fixed_points=[0]):
+        point_variables = [PointVariable(self.point_dim) for _ in range(self.num_points)]
+        landmark_variables = [LandmarkVariable(self.landmark_dim, self.landmark_labels[i])
+                              for i in range(self.num_landmarks)]
+
+        odometry_factors = [OdometryFactor(point_variables[u], point_variables[v], R, t)
+                            for (u, v), R, t in zip(*self.odometry_measurements())]
+        observation_factors = [ObservationFactor(point_variables[u], landmark_variables[v], H, d)
+                               for (u, v), H, d in zip(*self.observation_measurements())]
+
+        for index in fixed_points:
+            point_variables[index].position = self.points[index, :]
+
+        i = 0
+        j = 0
+        factor_list = []
+        for pv in point_variables:
+
+            if pv == odometry_factors[i].head:
+                factor_list.append(odometry_factors[i])
+                i += 1
+
+            while j < len(observation_factors) and pv == observation_factors[j].tail:
+                factor_list.append(observation_factors[j])
+                j += 1
+        return factor_list
 
 
 MAX_DIM = 3
@@ -121,4 +149,4 @@ def new_simulation(point_dim=None, landmark_dim=None, num_points=None, num_landm
         num_landmarks = np.random.choice(
             np.arange(np.floor_divide(MAX_LANDMARKS, 5), MAX_LANDMARKS + 1))
 
-    return Simulator(point_dim, landmark_dim, num_points, num_landmarks)
+    return Simulation(point_dim, landmark_dim, num_points, num_landmarks)

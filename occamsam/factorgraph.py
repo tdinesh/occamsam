@@ -274,28 +274,4 @@ class GaussianFactorGraph(object):
         nx.draw(self._graph)
         plt.show()
 
-    def insert_simulation_factors(self, sim, fixed_points=[0]):
 
-        point_variables = [PointVariable(sim.point_dim) for _ in range(sim.num_points)]
-        landmark_variables = [LandmarkVariable(sim.landmark_dim, sim.landmark_labels[i])
-                              for i in range(sim.num_landmarks)]
-
-        odometry_factors = [OdometryFactor(point_variables[u], point_variables[v], R, t)
-                            for (u, v), R, t in zip(*sim.odometry_factors())]
-        observation_factors = [ObservationFactor(point_variables[u], landmark_variables[v], H, d)
-                               for (u, v), H, d in zip(*sim.observation_factors())]
-
-        for index in fixed_points:
-            point_variables[index].position = sim.points[index, :]
-
-        i = 0
-        j = 0
-        for pv in point_variables:
-
-            if pv == odometry_factors[i].head:
-                self.add_factor(odometry_factors[i])
-                i += 1
-
-            while j < len(observation_factors) and pv == observation_factors[j].tail:
-                self.add_factor(observation_factors[j])
-                j += 1

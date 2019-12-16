@@ -21,9 +21,9 @@ class TestAdd(unittest.TestCase):
                               for i in range(sim.num_landmarks)]
 
         odometry_factors = [factor.OdometryFactor(point_variables[u], point_variables[v], R, t)
-                            for (u, v), R, t in zip(*sim.odometry_factors())]
+                            for (u, v), R, t in zip(*sim.odometry_measurements())]
         observation_factors = [factor.ObservationFactor(point_variables[u], landmark_variables[v], H, d)
-                               for (u, v), H, d in zip(*sim.observation_factors())]
+                               for (u, v), H, d in zip(*sim.observation_measurements())]
 
         for f in odometry_factors:
             fg.add_factor(f)
@@ -40,10 +40,11 @@ class TestObservationArray(unittest.TestCase):
     def test_observation_array1(self):
         sim = new_simulation(point_dim=1, landmark_dim=1, seed=111)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         _, d_sys = fg.observation_system
-        d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
+        d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_measurements())])
 
         self.assertEqual(len(d_sys), len(d_sim))
         self.assertTrue(np.allclose(d_sys, d_sim))
@@ -51,10 +52,11 @@ class TestObservationArray(unittest.TestCase):
     def test_observation_array2(self):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=112)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         _, d_sys = fg.observation_system
-        d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
+        d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_measurements())])
 
         self.assertEqual(len(d_sys), len(d_sim))
         self.assertTrue(np.allclose(d_sys, d_sim))
@@ -62,10 +64,11 @@ class TestObservationArray(unittest.TestCase):
     def test_observation_array3(self):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=113)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         _, d_sys = fg.observation_system
-        d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
+        d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_measurements())])
 
         self.assertEqual(len(d_sys), len(d_sim))
         self.assertTrue(np.allclose(d_sys, d_sim))
@@ -73,10 +76,11 @@ class TestObservationArray(unittest.TestCase):
     def test_observation_array4(self):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=114)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         _, d_sys = fg.observation_system
-        d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_factors())])
+        d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_measurements())])
 
         self.assertEqual(len(d_sys), len(d_sim))
         self.assertTrue(np.allclose(d_sys, d_sim))
@@ -87,10 +91,11 @@ class TestOdometryArray(unittest.TestCase):
     def test_odometry_array1(self):
         sim = new_simulation(point_dim=1, landmark_dim=1, seed=121)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
+        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -98,10 +103,11 @@ class TestOdometryArray(unittest.TestCase):
     def test_odometry_array2(self):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=122)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
+        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -109,10 +115,11 @@ class TestOdometryArray(unittest.TestCase):
     def test_odometry_array3(self):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=123)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
+        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -120,10 +127,11 @@ class TestOdometryArray(unittest.TestCase):
     def test_odometry_array4(self):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=124)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_factors())])
+        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -134,7 +142,8 @@ class TestObservationSystem(unittest.TestCase):
     def test_no_marginal1(self):
         sim = new_simulation(point_dim=1, landmark_dim=1, seed=211)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
@@ -146,7 +155,8 @@ class TestObservationSystem(unittest.TestCase):
     def test_no_marginal2(self):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=212)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
@@ -158,7 +168,8 @@ class TestObservationSystem(unittest.TestCase):
     def test_no_marginal3(self):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=213)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
@@ -170,7 +181,8 @@ class TestObservationSystem(unittest.TestCase):
     def test_no_marginal4(self):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=214)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
@@ -186,7 +198,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, num_landmarks=20, seed=221)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
@@ -202,7 +215,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=221)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
@@ -218,7 +232,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=222)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
@@ -234,7 +249,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=223)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
@@ -250,7 +266,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=224)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
@@ -266,7 +283,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=231)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
@@ -282,7 +300,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=232)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
@@ -298,7 +317,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=233)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
@@ -314,7 +334,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=234)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
@@ -330,7 +351,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=241)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
@@ -346,7 +368,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=242)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
@@ -362,7 +385,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=243)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
@@ -378,7 +402,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=244)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
@@ -394,7 +419,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=251)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.ravel(sim.landmarks)
@@ -410,7 +436,8 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=252)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.observation_system
         x = np.ravel(sim.landmarks)
@@ -425,7 +452,8 @@ class TestOdometrySystem(unittest.TestCase):
     def test_no_marginal1(self):
         sim = new_simulation(point_dim=1, landmark_dim=1, seed=311)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points)
@@ -437,7 +465,8 @@ class TestOdometrySystem(unittest.TestCase):
     def test_no_marginal2(self):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=312)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points)
@@ -449,7 +478,8 @@ class TestOdometrySystem(unittest.TestCase):
     def test_no_marginal3(self):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=313)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points)
@@ -461,7 +491,8 @@ class TestOdometrySystem(unittest.TestCase):
     def test_no_marginal4(self):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=314)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points)
@@ -477,7 +508,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=321)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-num_free_points:, :])
@@ -493,7 +525,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=322)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-num_free_points:, :])
@@ -509,7 +542,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=323)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-num_free_points:, :])
@@ -525,7 +559,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=324)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-num_free_points:, :])
@@ -541,7 +576,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=331)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
@@ -557,7 +593,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=332)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
@@ -573,7 +610,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=333)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
@@ -589,7 +627,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=334)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
@@ -605,7 +644,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=341)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
@@ -621,7 +661,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=342)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
@@ -637,7 +678,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=343)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
@@ -653,7 +695,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=344)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
         x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
@@ -669,7 +712,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=351)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
 
@@ -683,7 +727,8 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=352)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        fg.insert_simulation_factors(sim, fixed_points=list(range(num_fixed_points)))
+        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+            fg.add_factor(f)
 
         A, b = fg.odometry_system
 
@@ -696,7 +741,8 @@ class TestMerge(unittest.TestCase):
     def test_merge_once(self):
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=30, num_landmarks=30, seed=410)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         landmark_variables = list(fg._landmark_buffer.keys())
         landmark_pairs = [(landmark_variables[i], landmark_variables[j]) for i, j in sim.equivalence_pairs]
@@ -722,7 +768,8 @@ class TestMerge(unittest.TestCase):
     def test_merge_once_big(self):
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=2000, num_landmarks=120, seed=411)
         fg = factorgraph.GaussianFactorGraph()
-        fg.insert_simulation_factors(sim)
+        for f in sim.factors():
+            fg.add_factor(f)
 
         landmark_variables = list(fg._landmark_buffer.keys())
         landmark_pairs = [(landmark_variables[i], landmark_variables[j]) for i, j in sim.equivalence_pairs]
@@ -746,36 +793,15 @@ class TestMerge(unittest.TestCase):
         self.assertTrue(np.allclose(A.dot(x), b))
 
 
-
 class TestAccessSpeed(unittest.TestCase):
 
     def test_observation_speed(self):
 
         sim = new_simulation(seed=2, point_dim=3, landmark_dim=1)
         fg = factorgraph.GaussianFactorGraph(free_point_window=10)
-
-        point_variables = [variable.PointVariable(sim.point_dim) for _ in range(sim.num_points)]
-        landmark_variables = [variable.LandmarkVariable(sim.landmark_dim, sim.landmark_labels[i])
-                              for i in range(sim.num_landmarks)]
-
-        odometry_factors = [factor.OdometryFactor(point_variables[u], point_variables[v], R, t)
-                            for (u, v), R, t in zip(*sim.odometry_factors())]
-        observation_factors = [factor.ObservationFactor(point_variables[u], landmark_variables[v], H, d)
-                               for (u, v), H, d in zip(*sim.observation_factors())]
-
-        i = 0
-        j = 0
-        for pv in point_variables:
-
-            if pv == odometry_factors[i].head:
-                fg.add_factor(odometry_factors[i])
-                i += 1
-
-            while j < len(observation_factors) and pv == observation_factors[j].tail:
-                fg.add_factor(observation_factors[j])
-                j += 1
-
-            fg.observation_system
+        for f in sim.factors():
+            f.add_factor(f)
+            A, b = fg.observation_system
 
         self.assertTrue(True)
 
