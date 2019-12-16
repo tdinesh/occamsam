@@ -1,9 +1,7 @@
 import unittest
-
 import numpy as np
 
 import factorgraph
-
 from simulator import new_simulation
 
 
@@ -716,7 +714,7 @@ class TestMerge(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        landmarks = fg.landmarks
+        landmarks = sim.landmark_variables
         landmark_pairs = [(landmarks[i], landmarks[j]) for i, j in sim.equivalence_pairs]
 
         fg._merge_landmarks(landmark_pairs)
@@ -743,7 +741,7 @@ class TestMerge(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        landmarks = fg.landmarks
+        landmarks = sim.landmark_variables
         landmark_pairs = [(landmarks[i], landmarks[j]) for i, j in sim.equivalence_pairs]
 
         fg._merge_landmarks(landmark_pairs)
@@ -763,6 +761,22 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
         self.assertTrue(np.allclose(A.dot(x), b))
+
+    def test_merge_sequence(self):
+
+        sim = new_simulation(point_dim=1, landmark_dim=3, seed=412)
+        fg = factorgraph.GaussianFactorGraph()
+
+        num_partitions = 5
+        partition_indptr = np.sort(np.concatenate([[0], np.random.choice(sim.num_points, num_partitions-1), [sim.num_points]]))
+
+        for i in range(num_partitions):
+
+            for f in sim.factors((partition_indptr[i], partition_indptr[i+1])):
+                fg.add_factor(f)
+
+
+
 
 
 class TestAccessSpeed(unittest.TestCase):

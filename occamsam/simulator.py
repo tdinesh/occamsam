@@ -2,6 +2,7 @@ import numpy as np
 import scipy as sp
 import scipy.stats
 from collections import OrderedDict
+from itertools import chain
 
 from variable import PointVariable, LandmarkVariable
 from factor import OdometryFactor, ObservationFactor
@@ -83,7 +84,6 @@ class Simulation(object):
                                    for i in range(self.num_landmarks)]
         self.fix_points([0])
 
-
     def odometry_measurements(self):
 
         if self.point_dim > 1:
@@ -111,7 +111,8 @@ class Simulation(object):
             self.point_variables[i].position = self.point_positions[i, :]
         return self
 
-    def factors(self):
+    def factors(self, point_range=None):
+
         odometry_factors = [OdometryFactor(self.point_variables[u], self.point_variables[v], R, t)
                             for (u, v), R, t in zip(*self.odometry_measurements())]
         observation_factors = [ObservationFactor(self.point_variables[u], self.landmark_variables[v], H, d)
@@ -122,14 +123,21 @@ class Simulation(object):
         factor_list = []
         for pv in self.point_variables:
 
+            sync_factors = []
             if pv == odometry_factors[i].head:
-                factor_list.append(odometry_factors[i])
+                sync_factors.append(odometry_factors[i])
                 i += 1
 
             while j < len(observation_factors) and pv == observation_factors[j].tail:
-                factor_list.append(observation_factors[j])
+                sync_factors.append(observation_factors[j])
                 j += 1
-        return factor_list
+            factor_list.append(sync_factors)
+
+        if point_range is not None:
+            start, stop = point_range
+            factor_list = factor_list[start:stop]
+
+        return chain(*factor_list)
 
 
 MAX_DIM = 3
