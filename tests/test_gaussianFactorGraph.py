@@ -67,7 +67,7 @@ class TestOdometryArray(unittest.TestCase):
             fg.add_factor(f)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
+        t_sim = np.concatenate([sim.point_positions[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -79,7 +79,7 @@ class TestOdometryArray(unittest.TestCase):
             fg.add_factor(f)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
+        t_sim = np.concatenate([sim.point_positions[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -91,7 +91,7 @@ class TestOdometryArray(unittest.TestCase):
             fg.add_factor(f)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
+        t_sim = np.concatenate([sim.point_positions[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -103,7 +103,7 @@ class TestOdometryArray(unittest.TestCase):
             fg.add_factor(f)
 
         _, t_sys = fg.odometry_system
-        t_sim = np.concatenate([sim.points[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
+        t_sim = np.concatenate([sim.point_positions[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
         self.assertTrue(np.allclose(t_sys, t_sim))
@@ -118,7 +118,7 @@ class TestObservationSystem(unittest.TestCase):
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -131,7 +131,7 @@ class TestObservationSystem(unittest.TestCase):
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -144,7 +144,7 @@ class TestObservationSystem(unittest.TestCase):
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -157,7 +157,7 @@ class TestObservationSystem(unittest.TestCase):
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -170,11 +170,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, num_landmarks=20, seed=221)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -187,11 +187,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=221)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -204,11 +204,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=222)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -221,11 +221,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=223)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -238,11 +238,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=224)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-num_free_points:, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -255,11 +255,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=231)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -272,11 +272,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=232)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -289,11 +289,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=233)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -306,11 +306,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=234)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -323,11 +323,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=241)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -340,11 +340,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=242)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -357,11 +357,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=243)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -374,11 +374,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=244)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmarks), np.ravel(sim.points[-(num_points - num_fixed_points):, :])))
+        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -391,11 +391,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=251)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.ravel(sim.landmarks)
+        x = np.ravel(sim.landmark_positions)
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -408,11 +408,11 @@ class TestObservationSystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=252)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.observation_system
-        x = np.ravel(sim.landmarks)
+        x = np.ravel(sim.landmark_positions)
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -428,7 +428,7 @@ class TestOdometrySystem(unittest.TestCase):
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points)
+        x = np.ravel(sim.point_positions)
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -441,7 +441,7 @@ class TestOdometrySystem(unittest.TestCase):
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points)
+        x = np.ravel(sim.point_positions)
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -454,7 +454,7 @@ class TestOdometrySystem(unittest.TestCase):
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points)
+        x = np.ravel(sim.point_positions)
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -467,7 +467,7 @@ class TestOdometrySystem(unittest.TestCase):
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points)
+        x = np.ravel(sim.point_positions)
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -480,11 +480,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=321)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-num_free_points:, :])
+        x = np.ravel(sim.point_positions[-num_free_points:, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -497,11 +497,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=322)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-num_free_points:, :])
+        x = np.ravel(sim.point_positions[-num_free_points:, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -514,11 +514,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=323)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-num_free_points:, :])
+        x = np.ravel(sim.point_positions[-num_free_points:, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -531,11 +531,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=324)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-num_free_points:, :])
+        x = np.ravel(sim.point_positions[-num_free_points:, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -548,11 +548,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=331)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+        x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -565,11 +565,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=332)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+        x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -582,11 +582,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=333)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+        x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -599,11 +599,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=334)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+        x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -616,11 +616,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=1, num_points=num_points, seed=341)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+        x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -633,11 +633,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=1, landmark_dim=3, num_points=num_points, seed=342)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+        x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -650,11 +650,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=343)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+        x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -667,11 +667,11 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=344)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
-        x = np.ravel(sim.points[-(num_points - num_fixed_points):, :])
+        x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -684,7 +684,7 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=351)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
@@ -699,7 +699,7 @@ class TestOdometrySystem(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=3, num_points=num_points, seed=352)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
-        for f in sim.factors(fixed_points=list(range(num_fixed_points))):
+        for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
         A, b = fg.odometry_system
@@ -731,7 +731,7 @@ class TestMerge(unittest.TestCase):
         self.assertTrue(len(diff) == 0)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.unique_landmarks[unique_order, :]), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.unique_landmark_positions[unique_order, :]), np.ravel(sim.point_positions)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])
@@ -758,7 +758,7 @@ class TestMerge(unittest.TestCase):
         self.assertTrue(len(diff) == 0)
 
         A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.unique_landmarks[unique_order, :]), np.ravel(sim.points)))
+        x = np.concatenate((np.ravel(sim.unique_landmark_positions[unique_order, :]), np.ravel(sim.point_positions)))
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(x.size, A.shape[1])

@@ -20,11 +20,11 @@ class Simulation(object):
         self.num_unique_landmarks = int(0.2 * self.num_landmarks)
         self.num_classes = np.random.choice(10) + 1
 
-        self.points = 10 * np.random.rand(self.num_points, self.point_dim)
+        self.point_positions = 10 * np.random.rand(self.num_points, self.point_dim)
         point_ids = np.arange(self.num_points).tolist()
-        self.odometry_pairs = list(zip(point_ids, point_ids[1:]))
+        self.point_pairs = list(zip(point_ids, point_ids[1:]))
 
-        self.unique_landmarks = 10 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
+        self.unique_landmark_positions = 10 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
         unique_landmark_labels = np.random.choice(self.num_classes, self.num_unique_landmarks)
         if self.point_dim > 1:
             ortho_group = sp.stats.ortho_group
@@ -35,13 +35,13 @@ class Simulation(object):
         unique_landmark_orientation = np.array([principal_dirs[label] for label in unique_landmark_labels])
 
         equivalence_groups = random_groups(self.num_landmarks, self.num_unique_landmarks)
-        landmarks = np.zeros((self.num_landmarks, self.landmark_dim))
+        landmark_positions = np.zeros((self.num_landmarks, self.landmark_dim))
         landmark_labels = -np.ones(self.num_landmarks)
         landmark_orientation = np.zeros((self.num_landmarks, self.landmark_dim, self.point_dim))
         unique_index_map = -np.ones(self.num_landmarks, dtype=np.int)
         for i, group in enumerate(equivalence_groups):
             g_list = list(group)
-            landmarks[g_list, :] = self.unique_landmarks[i, :]
+            landmark_positions[g_list, :] = self.unique_landmark_positions[i, :]
             landmark_labels[g_list] = unique_landmark_labels[i]
             landmark_orientation[g_list, :, :] = unique_landmark_orientation[i]
             unique_index_map[g_list] = i
@@ -63,9 +63,9 @@ class Simulation(object):
         reindexing_map = -np.ones(self.num_landmarks, dtype=np.int)
         reindexing_map[landmark_order] = np.arange(self.num_landmarks)
         assert np.all(reindexing_map > -1), "Unset index in reindexing_map"
-        self.landmarks = landmarks[landmark_order, :]
+        self.landmark_positions = landmark_positions[landmark_order, :]
         self.landmark_labels = landmark_labels[landmark_order]
-        self.landmark_orientation = landmark_orientation[landmark_order, :, :]
+        self.landmark_orientations = landmark_orientation[landmark_order, :, :]
         self.observation_pairs = list(zip(list(observation_points), reindexing_map[list(observation_landmarks)]))
         self.num_observations = len(self.observation_pairs)
 
@@ -78,45 +78,49 @@ class Simulation(object):
             self.correspondence_map.union(i, j)
         self.unique_index_map = unique_index_map[landmark_order]
 
+        self.point_variables = [PointVariable(self.point_dim) for _ in range(self.num_points)]
+        self.landmark_variables = [LandmarkVariable(self.landmark_dim, self.landmark_labels[i])
+                                   for i in range(self.num_landmarks)]
+        self.fix_points([0])
+
+
     def odometry_measurements(self):
 
         if self.point_dim > 1:
             ortho_group = sp.stats.ortho_group
-            rs = [ortho_group.rvs(self.point_dim) for _ in self.odometry_pairs]
+            rs = [ortho_group.rvs(self.point_dim) for _ in self.point_pairs]
         else:
-            rs = [np.array([1.]) for _ in self.odometry_pairs]
+            rs = [np.array([1.]) for _ in self.point_pairs]
 
-        ts = [np.dot(rs[i].T, self.points[v, :] - self.points[u, :])
-              for i, (u, v) in enumerate(self.odometry_pairs)]
+        ts = [np.dot(rs[i].T, self.point_positions[v, :] - self.point_positions[u, :])
+              for i, (u, v) in enumerate(self.point_pairs)]
 
-        return self.odometry_pairs, rs, ts
+        return self.point_pairs, rs, ts
 
     def observation_measurements(self):
 
-        hs = [self.landmark_orientation[v] for _, v in self.observation_pairs]
+        hs = [self.landmark_orientations[v] for _, v in self.observation_pairs]
 
-        ds = [self.landmarks[v, :] - np.dot(self.landmark_orientation[v], self.points[u, :])
+        ds = [self.landmark_positions[v, :] - np.dot(self.landmark_orientations[v], self.point_positions[u, :])
               for (u, v) in self.observation_pairs]
 
         return self.observation_pairs, hs, ds
 
-    def factors(self, fixed_points=[0]):
-        point_variables = [PointVariable(self.point_dim) for _ in range(self.num_points)]
-        landmark_variables = [LandmarkVariable(self.landmark_dim, self.landmark_labels[i])
-                              for i in range(self.num_landmarks)]
+    def fix_points(self, point_index):
+        for i in point_index:
+            self.point_variables[i].position = self.point_positions[i, :]
+        return self
 
-        odometry_factors = [OdometryFactor(point_variables[u], point_variables[v], R, t)
+    def factors(self):
+        odometry_factors = [OdometryFactor(self.point_variables[u], self.point_variables[v], R, t)
                             for (u, v), R, t in zip(*self.odometry_measurements())]
-        observation_factors = [ObservationFactor(point_variables[u], landmark_variables[v], H, d)
+        observation_factors = [ObservationFactor(self.point_variables[u], self.landmark_variables[v], H, d)
                                for (u, v), H, d in zip(*self.observation_measurements())]
-
-        for index in fixed_points:
-            point_variables[index].position = self.points[index, :]
 
         i = 0
         j = 0
         factor_list = []
-        for pv in point_variables:
+        for pv in self.point_variables:
 
             if pv == odometry_factors[i].head:
                 factor_list.append(odometry_factors[i])
