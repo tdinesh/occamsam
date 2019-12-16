@@ -3,36 +3,8 @@ import unittest
 import numpy as np
 
 import factorgraph
-import factor
-import variable
 
 from simulator import new_simulation
-
-
-class TestAdd(unittest.TestCase):
-
-    def test_add_factor(self):
-
-        sim = new_simulation(seed=1)
-        fg = factorgraph.GaussianFactorGraph()
-
-        point_variables = [variable.PointVariable(sim.point_dim) for _ in range(sim.num_points)]
-        landmark_variables = [variable.LandmarkVariable(sim.landmark_dim, sim.landmark_labels[i])
-                              for i in range(sim.num_landmarks)]
-
-        odometry_factors = [factor.OdometryFactor(point_variables[u], point_variables[v], R, t)
-                            for (u, v), R, t in zip(*sim.odometry_measurements())]
-        observation_factors = [factor.ObservationFactor(point_variables[u], landmark_variables[v], H, d)
-                               for (u, v), H, d in zip(*sim.observation_measurements())]
-
-        for f in odometry_factors:
-            fg.add_factor(f)
-
-        for f in observation_factors:
-            fg.add_factor(f)
-
-        self.assertEqual(len(fg.variables), sim.num_points + sim.num_landmarks)
-        self.assertEqual(len(fg.factors), len(odometry_factors) + len(observation_factors))
 
 
 class TestObservationArray(unittest.TestCase):
@@ -744,17 +716,17 @@ class TestMerge(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        landmark_variables = list(fg._landmark_buffer.keys())
-        landmark_pairs = [(landmark_variables[i], landmark_variables[j]) for i, j in sim.equivalence_pairs]
+        landmarks = fg.landmarks
+        landmark_pairs = [(landmarks[i], landmarks[j]) for i, j in sim.equivalence_pairs]
 
         fg._merge_landmarks(landmark_pairs)
-        unique_landmark_variables = list(fg._landmark_buffer.keys())
-        unique_order = [sim.unique_index_map[landmark_variables.index(k)] for k in unique_landmark_variables]
+        unique_landmarks = fg.landmarks
+        unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
 
-        self.assertEqual(len(fg._correspondence_map.set_map().keys()), sim.num_unique_landmarks)
-        fg_groups = set(frozenset(g) for g in fg._correspondence_map.set_map().values())
+        self.assertEqual(len(fg.correspondence_map.set_map().keys()), sim.num_unique_landmarks)
+        fg_groups = set(frozenset(g) for g in fg.correspondence_map.set_map().values())
         sim_groups = set(
-            frozenset(landmark_variables[i] for i in g_ids) for g_ids in sim.correspondence_map.set_map().values())
+            frozenset(landmarks[i] for i in g_ids) for g_ids in sim.correspondence_map.set_map().values())
         diff = sim_groups.symmetric_difference(fg_groups)
         self.assertTrue(len(diff) == 0)
 
@@ -771,17 +743,17 @@ class TestMerge(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        landmark_variables = list(fg._landmark_buffer.keys())
-        landmark_pairs = [(landmark_variables[i], landmark_variables[j]) for i, j in sim.equivalence_pairs]
+        landmarks = fg.landmarks
+        landmark_pairs = [(landmarks[i], landmarks[j]) for i, j in sim.equivalence_pairs]
 
         fg._merge_landmarks(landmark_pairs)
-        unique_landmark_variables = list(fg._landmark_buffer.keys())
-        unique_order = [sim.unique_index_map[landmark_variables.index(k)] for k in unique_landmark_variables]
+        unique_landmarks = fg.landmarks
+        unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
 
-        self.assertEqual(len(fg._correspondence_map.set_map().keys()), sim.num_unique_landmarks)
-        fg_groups = set(frozenset(g) for g in fg._correspondence_map.set_map().values())
+        self.assertEqual(len(fg.correspondence_map.set_map().keys()), sim.num_unique_landmarks)
+        fg_groups = set(frozenset(g) for g in fg.correspondence_map.set_map().values())
         sim_groups = set(
-            frozenset(landmark_variables[i] for i in g_ids) for g_ids in sim.correspondence_map.set_map().values())
+            frozenset(landmarks[i] for i in g_ids) for g_ids in sim.correspondence_map.set_map().values())
         diff = sim_groups.symmetric_difference(fg_groups)
         self.assertTrue(len(diff) == 0)
 

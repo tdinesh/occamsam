@@ -2,7 +2,6 @@ import sys
 import numpy as np
 import scipy as sp
 import scipy.sparse
-import networkx as nx
 from collections import OrderedDict
 
 from factor import LinearFactor, ObservationFactor, OdometryFactor
@@ -15,18 +14,12 @@ class GaussianFactorGraph(object):
 
     def __init__(self, free_point_window=None):
 
-        # For python versions < 3.6, we need to use Ordered(Graph) to access nodes in the order they are presented
-        # In python 3.6+, dicts are ordered by default
-        self._graph = nx.OrderedDiGraph()
-
-        self.variables = self._graph.nodes()
-        self.factors = self._graph.edges()
-
         if free_point_window is None:
             self.free_point_window = sys.maxsize
         else:
             self.free_point_window = free_point_window
 
+        self._points = OrderedDict()
         self._free_point_buffer = OrderedDict()  # map of point variables to their associated column in A and B
         self._A = DBSRMatrix()
         self._B = DBSRMatrix()
@@ -38,7 +31,7 @@ class GaussianFactorGraph(object):
         self._d = []
         self._t = []
 
-        self._correspondence_map = UnionFind()
+        self.correspondence_map = UnionFind()
 
     def add_factor(self, f):
         """
@@ -47,7 +40,6 @@ class GaussianFactorGraph(object):
         :param f: OdometryFactor or ObservationFactor to append to the sparse system
         """
         assert (isinstance(f, LinearFactor)), "Expected type LinearFactor, got %s" % type(f)
-        self._graph.add_edge(f.tail, f.head, factor=f)
 
         if isinstance(f, OdometryFactor):
 
@@ -79,7 +71,7 @@ class GaussianFactorGraph(object):
             self._append_to_free_buffer(f.tail)
             self._append_to_array_index(f.tail, len(self._d), 'd')
 
-            self._H.append_row(list(self._landmark_buffer.keys()).index(self._correspondence_map.find(f.head)), f.A1)
+            self._H.append_row(list(self._landmark_buffer.keys()).index(self.correspondence_map.find(f.head)), f.A1)
             self._A.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2)
             self._d.append(f.b)
 
@@ -98,6 +90,7 @@ class GaussianFactorGraph(object):
 
         assert isinstance(point, PointVariable), "Expected type PointVariable, got %s instead" % type(point)
         self._free_point_buffer[point] = None
+        self._points[point] = None
 
     def _append_to_landmark_buffer(self, landmark):
         """
@@ -109,7 +102,7 @@ class GaussianFactorGraph(object):
 
         assert isinstance(landmark, LandmarkVariable), "Expected type LandmarkVariable, got %s instead" % type(landmark)
         self._landmark_buffer[landmark] = None
-        self._correspondence_map.insert(landmark)
+        self.correspondence_map.insert(landmark)
 
 
     def _append_to_array_index(self, point, row, meas_type):
@@ -187,9 +180,9 @@ class GaussianFactorGraph(object):
     def _merge_landmarks(self, pairs):
 
         for u, v in pairs:
-            self._correspondence_map.union(u, v)
+            self.correspondence_map.union(u, v)
 
-        set_map = self._correspondence_map.set_map()
+        set_map = self.correspondence_map.set_map()
         for super_landmark in set_map:
             landmark_index_map = dict((k, i) for i, k in enumerate(self._landmark_buffer.keys()))
             correspondence_set = set(set_map[super_landmark])
@@ -204,6 +197,13 @@ class GaussianFactorGraph(object):
             for landmark in unmerged_landmarks:
                 self._landmark_buffer.pop(landmark, None)
 
+    @property
+    def points(self):
+        return list(self._points.keys())
+
+    @property
+    def landmarks(self):
+        return list(self._landmark_buffer.keys())
 
     @property
     def observation_system(self):
@@ -261,17 +261,5 @@ class GaussianFactorGraph(object):
         A = self._B.to_bsr().tocsr()
         d = np.block(self._t)[-A.shape[0]:]
         return A, d
-
-    def draw(self):
-
-        """
-        TODO: Replace with a hook to Cytoscape of Graphiz as recommended
-        """
-
-        import matplotlib.pyplot as plt
-
-        plt.plot()
-        nx.draw(self._graph)
-        plt.show()
 
 
