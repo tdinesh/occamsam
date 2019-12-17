@@ -23,7 +23,7 @@ class Simulation(object):
 
         self.point_positions = 10 * np.random.rand(self.num_points, self.point_dim)
         point_ids = np.arange(self.num_points).tolist()
-        self.point_pairs = list(zip(point_ids, point_ids[1:]))
+        self._point_pairs = list(zip(point_ids, point_ids[1:]))
 
         self.unique_landmark_positions = 10 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
         unique_landmark_labels = np.random.choice(self.num_classes, self.num_unique_landmarks)
@@ -67,16 +67,10 @@ class Simulation(object):
         self.landmark_positions = landmark_positions[landmark_order, :]
         self.landmark_labels = landmark_labels[landmark_order]
         self.landmark_orientations = landmark_orientation[landmark_order, :, :]
-        self.observation_pairs = list(zip(list(observation_points), reindexing_map[list(observation_landmarks)]))
-        self.num_observations = len(self.observation_pairs)
+        self._observation_pairs = list(zip(list(observation_points), reindexing_map[list(observation_landmarks)]))
+        self.num_observations = len(self._observation_pairs)
 
-        self.equivalence_groups = [frozenset(reindexing_map[list(group)]) for group in equivalence_groups]
-        self.equivalence_pairs = sample_pairs(self.equivalence_groups)
-        self.correspondence_map = UnionFind()
-        for i in range(self.num_landmarks):
-            self.correspondence_map.insert(i)
-        for i, j in self.equivalence_pairs:
-            self.correspondence_map.union(i, j)
+        self._equivalence_groups = [frozenset(reindexing_map[list(group)]) for group in equivalence_groups]
         self.unique_index_map = unique_index_map[landmark_order]
 
         self.point_variables = [PointVariable(self.point_dim) for _ in range(self.num_points)]
@@ -88,23 +82,23 @@ class Simulation(object):
 
         if self.point_dim > 1:
             ortho_group = sp.stats.ortho_group
-            rs = [ortho_group.rvs(self.point_dim) for _ in self.point_pairs]
+            rs = [ortho_group.rvs(self.point_dim) for _ in self._point_pairs]
         else:
-            rs = [np.array([1.]) for _ in self.point_pairs]
+            rs = [np.array([1.]) for _ in self._point_pairs]
 
         ts = [np.dot(rs[i].T, self.point_positions[v, :] - self.point_positions[u, :])
-              for i, (u, v) in enumerate(self.point_pairs)]
+              for i, (u, v) in enumerate(self._point_pairs)]
 
-        return self.point_pairs, rs, ts
+        return self._point_pairs, rs, ts
 
     def observation_measurements(self):
 
-        hs = [self.landmark_orientations[v] for _, v in self.observation_pairs]
+        hs = [self.landmark_orientations[v] for _, v in self._observation_pairs]
 
         ds = [self.landmark_positions[v, :] - np.dot(self.landmark_orientations[v], self.point_positions[u, :])
-              for (u, v) in self.observation_pairs]
+              for (u, v) in self._observation_pairs]
 
-        return self.observation_pairs, hs, ds
+        return self._observation_pairs, hs, ds
 
     def fix_points(self, point_index):
         for i in point_index:
@@ -138,6 +132,28 @@ class Simulation(object):
             factor_list = factor_list[start:stop]
 
         return chain(*factor_list)
+
+    def equivalences(self, point_range=None):
+
+        if point_range is None:
+            start, stop = 0, self.num_points
+        else:
+            start, stop = point_range
+
+        observed_landmarks = set([landmark_id for point_id, landmark_id in self._observation_pairs if point_id in range(start, stop)])
+
+        equiv_groups = []
+        for g in self._equivalence_groups:
+            filtered_group = g.intersection(observed_landmarks)
+            if filtered_group == frozenset():
+                continue
+            equiv_groups.append(filtered_group)
+        equiv_pairs = sample_pairs(equiv_groups)
+
+        equiv_groups = set(frozenset(self.landmark_variables[i] for i in g) for g in equiv_groups)
+        equiv_pairs = [(self.landmark_variables[i] for i in p) for p in equiv_pairs]
+
+        return equiv_groups, equiv_pairs
 
 
 MAX_DIM = 3

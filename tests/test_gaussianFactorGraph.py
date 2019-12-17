@@ -715,17 +715,15 @@ class TestMerge(unittest.TestCase):
             fg.add_factor(f)
 
         landmarks = sim.landmark_variables
-        landmark_pairs = [(landmarks[i], landmarks[j]) for i, j in sim.equivalence_pairs]
+        equiv_groups, equiv_pairs = sim.equivalences()
 
-        fg._merge_landmarks(landmark_pairs)
+        fg._merge_landmarks(equiv_pairs)
         unique_landmarks = fg.landmarks
         unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
 
         self.assertEqual(len(fg.correspondence_map.set_map().keys()), sim.num_unique_landmarks)
         fg_groups = set(frozenset(g) for g in fg.correspondence_map.set_map().values())
-        sim_groups = set(
-            frozenset(landmarks[i] for i in g_ids) for g_ids in sim.correspondence_map.set_map().values())
-        diff = sim_groups.symmetric_difference(fg_groups)
+        diff = equiv_groups.symmetric_difference(fg_groups)
         self.assertTrue(len(diff) == 0)
 
         A, b = fg.observation_system
@@ -742,17 +740,16 @@ class TestMerge(unittest.TestCase):
             fg.add_factor(f)
 
         landmarks = sim.landmark_variables
-        landmark_pairs = [(landmarks[i], landmarks[j]) for i, j in sim.equivalence_pairs]
 
-        fg._merge_landmarks(landmark_pairs)
+        equiv_groups, equiv_pairs = sim.equivalences()
+
+        fg._merge_landmarks(equiv_pairs)
         unique_landmarks = fg.landmarks
         unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
 
         self.assertEqual(len(fg.correspondence_map.set_map().keys()), sim.num_unique_landmarks)
         fg_groups = set(frozenset(g) for g in fg.correspondence_map.set_map().values())
-        sim_groups = set(
-            frozenset(landmarks[i] for i in g_ids) for g_ids in sim.correspondence_map.set_map().values())
-        diff = sim_groups.symmetric_difference(fg_groups)
+        diff = equiv_groups.symmetric_difference(fg_groups)
         self.assertTrue(len(diff) == 0)
 
         A, b = fg.observation_system
@@ -767,6 +764,8 @@ class TestMerge(unittest.TestCase):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=412)
         fg = factorgraph.GaussianFactorGraph()
 
+        landmarks = sim.landmark_variables
+
         num_partitions = 5
         partition_indptr = np.sort(np.concatenate([[0], np.random.choice(sim.num_points, num_partitions-1), [sim.num_points]]))
 
@@ -775,8 +774,25 @@ class TestMerge(unittest.TestCase):
             for f in sim.factors((partition_indptr[i], partition_indptr[i+1])):
                 fg.add_factor(f)
 
+            equiv_groups, equiv_pairs = sim.equivalences((0, partition_indptr[i+1]))
 
+            fg._merge_landmarks(equiv_pairs)
 
+            unique_landmarks = fg.landmarks
+            unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
+
+            self.assertEqual(len(fg.correspondence_map.set_map().keys()), len(unique_landmarks))
+            fg_groups = set(frozenset(g) for g in fg.correspondence_map.set_map().values())
+            diff = equiv_groups.symmetric_difference(fg_groups)
+            self.assertTrue(len(diff) == 0)
+
+            A, b = fg.observation_system
+            x = np.concatenate((np.ravel(sim.unique_landmark_positions[unique_order, :]),
+                                np.ravel(sim.point_positions[:partition_indptr[i+1], :])))
+
+            self.assertEqual(b.size, A.shape[0])
+            self.assertEqual(x.size, A.shape[1])
+            self.assertTrue(np.allclose(A.dot(x), b))
 
 
 class TestAccessSpeed(unittest.TestCase):
