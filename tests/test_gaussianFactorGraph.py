@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 
 import factorgraph
+from optim import equivalence_matrix
 from simulator import new_simulation
 
 
@@ -803,7 +804,7 @@ class TestMerge(unittest.TestCase):
 
         landmarks = sim.landmark_variables
 
-        _, equiv_pairs = fg._equivalence_matrix()
+        _, equiv_pairs = equivalence_matrix(fg.landmarks)
         equiv_pairs = [(landmarks[i], landmarks[j]) for i, j in equiv_pairs]
 
         equiv_groups, _ = sim.equivalences()
@@ -829,8 +830,6 @@ class TestOptimization(unittest.TestCase):
 
     def test1(self):
         pass
-
-
 
 
 class TestAccessSpeed(unittest.TestCase):

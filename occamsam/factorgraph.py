@@ -3,7 +3,6 @@ import numpy as np
 import scipy as sp
 import scipy.sparse
 from collections import OrderedDict
-from itertools import combinations
 
 from factor import LinearFactor, ObservationFactor, OdometryFactor
 from variable import LandmarkVariable, PointVariable
@@ -105,7 +104,6 @@ class GaussianFactorGraph(object):
         self._landmark_buffer[landmark] = None
         self.correspondence_map.insert(landmark)
 
-
     def _append_to_array_index(self, point, row, meas_type):
         """
         Appends row to the list of row factors in which the point variable participates in.
@@ -165,9 +163,6 @@ class GaussianFactorGraph(object):
                     A.insert_block(row, col, np.zeros_like(block))
                     del array_index[point][i]
             A.remove_col(col)
-
-    def optimize(self):
-        pass
 
     def _merge_landmarks(self, pairs):
 
@@ -253,28 +248,5 @@ class GaussianFactorGraph(object):
         A = self._B.to_bsr().tocsr()
         d = np.block(self._t)[-A.shape[0]:]
         return A, d
-
-    def _equivalence_matrix(self):
-        """
-        Returns the linear system of suspected equivalence constraints on the landmark variables
-            E * M = 0
-
-
-        :return: E:
-        """
-
-        distance_threshold = 1e-6
-        landmarks = self.landmarks
-        num_landmarks = len(landmarks)
-        suspected_equivalences = [(i, j) for i, j in combinations(range(num_landmarks), 2)
-                                  if landmarks[i].position is not None and landmarks[j].position is not None
-                                  and np.linalg.norm(landmarks[i].position - landmarks[j].position) < distance_threshold]
-
-        E = sp.sparse.csr_matrix((len(suspected_equivalences), num_landmarks))
-        for i, (j1, j2) in enumerate(suspected_equivalences):
-            E[i, j1] = 1
-            E[i, j2] = -1
-
-        return E, suspected_equivalences
 
 
