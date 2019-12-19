@@ -105,6 +105,11 @@ class Simulation(object):
             self.point_variables[i].position = self.point_positions[i, :]
         return self
 
+    def fix_landmarks(self, landmark_index):
+        for i in landmark_index:
+            self.landmark_variables[i].position = self.landmark_positions[i, :]
+        return self
+
     def factors(self, point_range=None):
 
         odometry_factors = [OdometryFactor(self.point_variables[u], self.point_variables[v], R, t)
