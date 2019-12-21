@@ -21,11 +21,11 @@ class Simulation(object):
         self.num_unique_landmarks = int(0.2 * self.num_landmarks)
         self.num_classes = np.random.choice(10) + 1
 
-        self.point_positions = 10 * np.random.rand(self.num_points, self.point_dim)
+        self.point_positions = 50 * np.random.rand(self.num_points, self.point_dim)
         point_ids = np.arange(self.num_points).tolist()
         self._point_pairs = list(zip(point_ids, point_ids[1:]))
 
-        self.unique_landmark_positions = 10 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
+        self.unique_landmark_positions = 50 * np.random.rand(self.num_unique_landmarks, self.landmark_dim)
         unique_landmark_labels = np.random.choice(self.num_classes, self.num_unique_landmarks)
         if self.point_dim > 1:
             ortho_group = sp.stats.ortho_group
@@ -67,6 +67,7 @@ class Simulation(object):
         self.landmark_positions = landmark_positions[landmark_order, :]
         self.landmark_labels = landmark_labels[landmark_order]
         self.landmark_orientations = landmark_orientation[landmark_order, :, :]
+        self.landmark_masses = 15 * np.random.random(self.num_landmarks)
         self._observation_pairs = list(zip(list(observation_points), reindexing_map[list(observation_landmarks)]))
         self.num_observations = len(self._observation_pairs)
 
@@ -74,7 +75,7 @@ class Simulation(object):
         self.unique_index_map = unique_index_map[landmark_order]
 
         self.point_variables = [PointVariable(self.point_dim) for _ in range(self.num_points)]
-        self.landmark_variables = [LandmarkVariable(self.landmark_dim, self.landmark_labels[i])
+        self.landmark_variables = [LandmarkVariable(self.landmark_dim, self.landmark_labels[i], self.landmark_masses[i])
                                    for i in range(self.num_landmarks)]
         self.fix_points([0])
 

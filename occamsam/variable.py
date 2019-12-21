@@ -26,7 +26,7 @@ class PointVariable(Variable):
 
 class LandmarkVariable(Variable):
 
-    def __init__(self, dim, label):
+    def __init__(self, dim, class_label, mass=1):
         """
         A landmark variable corresponds to the position of a landmark in some frame.
 
@@ -34,9 +34,11 @@ class LandmarkVariable(Variable):
         associated with one another.
 
         :param dim: Dimensionality of the position variable
-        :param label: Equivalence class to which the landmark belongs
+        :param class_label: Equivalence class to which the landmark belongs
+        :param mass: Measure of landmark size, weight, or importance
         """
 
         super(LandmarkVariable, self).__init__(dim)
 
-        self.eqclass = label
+        self.class_label = class_label
+        self.mass = mass
