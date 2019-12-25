@@ -15,17 +15,17 @@ class GaussianFactorGraph(object):
     def __init__(self, free_point_window=None):
 
         if free_point_window is None:
-            self.free_point_window = sys.maxsize
+            self._free_point_window = sys.maxsize
         else:
-            self.free_point_window = free_point_window
+            self._free_point_window = free_point_window
 
         self._points = OrderedDict()
         self._free_point_buffer = OrderedDict()  # map of point variables to their associated column in A and B
-        self._A = DBSRMatrix()
-        self._B = DBSRMatrix()
+        self._Ap = DBSRMatrix()
+        self._Bp = DBSRMatrix()
 
         self._landmark_buffer = OrderedDict()  # map of landmark variables to their associated column in H
-        self._H = DBSRMatrix()
+        self._Am = DBSRMatrix()
 
         self._array_index = {'d': {}, 't': {}}  # map of point variables to rows in which they participate in a factor
         self._d = []
@@ -50,7 +50,7 @@ class GaussianFactorGraph(object):
                     init_position = f.tail.position
                 self._append_to_free_buffer(f.tail)
                 self._append_to_array_index(f.tail, 0, 't')
-                self._B.append_row(0, np.eye(len(init_position)))
+                self._Bp.append_row(0, np.eye(len(init_position)))
                 self._t.append(init_position)
 
             row = len(self._t)
@@ -60,9 +60,9 @@ class GaussianFactorGraph(object):
             self._append_to_free_buffer(f.head)
             self._append_to_array_index(f.head, row, 't')
 
-            self._B.append_row([list(self._free_point_buffer.keys()).index(f.tail),
-                                list(self._free_point_buffer.keys()).index(f.head)],
-                               [-f.A2, f.A1])
+            self._Bp.append_row([list(self._free_point_buffer.keys()).index(f.tail),
+                                 list(self._free_point_buffer.keys()).index(f.head)],
+                                [-f.A2, f.A1])
             self._t.append(f.b)
 
         elif isinstance(f, ObservationFactor):
@@ -71,8 +71,8 @@ class GaussianFactorGraph(object):
             self._append_to_free_buffer(f.tail)
             self._append_to_array_index(f.tail, len(self._d), 'd')
 
-            self._H.append_row(list(self._landmark_buffer.keys()).index(self.correspondence_map.find(f.head)), f.A1)
-            self._A.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2)
+            self._Am.append_row(list(self._landmark_buffer.keys()).index(self.correspondence_map.find(f.head)), f.A1)
+            self._Ap.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2)
             self._d.append(f.b)
 
         else:
@@ -131,10 +131,10 @@ class GaussianFactorGraph(object):
         """
 
         num_free = len(self._free_point_buffer)
-        if num_free > self.free_point_window:
+        if num_free > self._free_point_window:
 
             # traverse buffer from back to front marginalizing points with known positions
-            num_old = num_free - self.free_point_window
+            num_old = num_free - self._free_point_window
             for oldest_point in list(self._free_point_buffer)[:num_old]:
                 if oldest_point.position is not None:
                     x = self._free_point_buffer.popitem(last=False)[0]
@@ -151,8 +151,8 @@ class GaussianFactorGraph(object):
         :param col: column index corresponding to the point variable
         """
 
-        for debug_iter, (A, b, array_index) in enumerate([(self._A, self._d, self._array_index['d']),
-                                                          (self._B, self._t, self._array_index['t'])]):
+        for debug_iter, (A, b, array_index) in enumerate([(self._Ap, self._d, self._array_index['d']),
+                                                          (self._Bp, self._t, self._array_index['t'])]):
             col_data = A.get_col(col)
             n_blocks = len(col_data)
             if n_blocks > 0:
@@ -178,21 +178,12 @@ class GaussianFactorGraph(object):
             super_landmark_index = landmark_index_map[super_landmark]
             unmerged_landmark_index = sorted([landmark_index_map[x] for x in unmerged_landmarks])
             for i in unmerged_landmark_index:
-                self._H.copy_col(i, super_landmark_index)
+                self._Am.copy_col(i, super_landmark_index)
             for i in reversed(unmerged_landmark_index):
-                self._H.remove_col(i)
+                self._Am.remove_col(i)
             for landmark in unmerged_landmarks:
                 self._landmark_buffer.pop(landmark, None)
 
-    @property
-    def points(self):
-        return list(self._points.keys())
-
-    @property
-    def landmarks(self):
-        return list(self._landmark_buffer.keys())
-
-    @property
     def observation_system(self):
         """
         Returns the linear system of observation constraints on the landmark and pose variables
@@ -213,20 +204,21 @@ class GaussianFactorGraph(object):
         :return: d: Array of distance measurements
         """
 
-        _H = self._H.to_bsr()
-        _A = self._A.to_bsr()
+        Am = self._Am.to_bsr()
+        Ap = self._Ap.to_bsr()
 
-        n_missing_cols = (_A.blocksize[1] * len(self._free_point_buffer)) - _A.shape[1]
-        col_padding = sp.sparse.bsr_matrix((_A.shape[0], n_missing_cols))
+        n_missing_cols = (Ap.blocksize[1] * len(self._free_point_buffer)) - Ap.shape[1]
+        col_padding = sp.sparse.bsr_matrix((Ap.shape[0], n_missing_cols))
 
-        n_missing_rows = _H.shape[0] - _A.shape[0]
-        row_padding = sp.sparse.bsr_matrix((n_missing_rows, _A.shape[1]))
+        n_missing_rows = Am.shape[0] - Ap.shape[0]
+        row_padding = sp.sparse.bsr_matrix((n_missing_rows, Ap.shape[1]))
 
-        A = sp.sparse.bmat([[_H, sp.sparse.bmat([[row_padding, None], [_A, col_padding]])]]).tocsr()
+        Am = Am.tocsr()
+        Ap = sp.sparse.bmat([[row_padding, None], [Ap, col_padding]]).tocsr()
         d = np.block(self._d)
-        return A, d
 
-    @property
+        return Am, Ap, d
+
     def odometry_system(self):
         """
         Returns the linear system of odometry constraints on the pose variables
@@ -245,8 +237,20 @@ class GaussianFactorGraph(object):
         :return: t: Array of translation measurements
         """
 
-        A = self._B.to_bsr().tocsr()
-        d = np.block(self._t)[-A.shape[0]:]
-        return A, d
+        Bp = self._Bp.to_bsr().tocsr()
+        t = np.block(self._t)[-Bp.shape[0]:]
+        return Bp, t
+
+    @property
+    def num_free_points(self):
+        return len(self._free_point_buffer)
+
+    @property
+    def points(self):
+        return list(self._points.keys())
+
+    @property
+    def landmarks(self):
+        return list(self._landmark_buffer.keys())
 
 

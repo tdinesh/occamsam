@@ -49,18 +49,24 @@ class SumMassWeight(object):
         return self.W.dot(x)
 
 
-def equivalence_matrix(landmarks, weight_function=None):
+def equivalence_matrix(landmarks):
 
-    distance_threshold = 1e-6
-    num_landmarks = len(landmarks)
-    suspected_equivalences = [(i, j) for i, j in combinations(range(num_landmarks), 2)
-                              if i != j and landmarks[i].position is not None and landmarks[j].position is not None
-                              and landmarks[i].class_label == landmarks[j].class_label
-                              and np.linalg.norm(landmarks[i].position - landmarks[j].position) < distance_threshold]
+    landmark_pairs = []
+    index_pairs = []
+    for (i, mi), (j, mj) in combinations(enumerate(landmarks), 2):
 
-    E = sp.sparse.lil_matrix((len(suspected_equivalences), num_landmarks))
-    for i, (j0, j1) in enumerate(suspected_equivalences):
-        E[i, j0] = 1
-        E[i, j1] = -1
+        if mi.class_label != mj.class_label:
+            continue
 
-    return E.tocsr(), suspected_equivalences
+        if mi.position is None or mj.position is None:
+            continue
+
+        landmark_pairs.append((mi, mj))
+        index_pairs.append((i, j))
+
+    E = sp.sparse.lil_matrix((len(index_pairs), len(landmarks)))
+    for row, (i, j) in enumerate(index_pairs):
+        E[row, i] = 1
+        E[row, j] = -1
+
+    return E.tocsr()

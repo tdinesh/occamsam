@@ -13,7 +13,7 @@ class TestObservationArray(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        _, d_sys = fg.observation_system
+        _, d_sys = fg.observation_system()
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_measurements())])
 
         self.assertEqual(len(d_sys), len(d_sim))
@@ -25,7 +25,7 @@ class TestObservationArray(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        _, d_sys = fg.observation_system
+        _, d_sys = fg.observation_system()
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_measurements())])
 
         self.assertEqual(len(d_sys), len(d_sim))
@@ -37,7 +37,7 @@ class TestObservationArray(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        _, d_sys = fg.observation_system
+        _, d_sys = fg.observation_system()
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_measurements())])
 
         self.assertEqual(len(d_sys), len(d_sim))
@@ -49,7 +49,7 @@ class TestObservationArray(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        _, d_sys = fg.observation_system
+        _, d_sys = fg.observation_system()
         d_sim = np.concatenate([d for _, _, d in zip(*sim.observation_measurements())])
 
         self.assertEqual(len(d_sys), len(d_sim))
@@ -64,7 +64,7 @@ class TestOdometryArray(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        _, t_sys = fg.odometry_system
+        _, t_sys = fg.odometry_system()
         t_sim = np.concatenate([sim.point_positions[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
@@ -76,7 +76,7 @@ class TestOdometryArray(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        _, t_sys = fg.odometry_system
+        _, t_sys = fg.odometry_system()
         t_sim = np.concatenate([sim.point_positions[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
@@ -88,7 +88,7 @@ class TestOdometryArray(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        _, t_sys = fg.odometry_system
+        _, t_sys = fg.odometry_system()
         t_sim = np.concatenate([sim.point_positions[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
@@ -100,7 +100,7 @@ class TestOdometryArray(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        _, t_sys = fg.odometry_system
+        _, t_sys = fg.odometry_system()
         t_sim = np.concatenate([sim.point_positions[0, :]] + [np.dot(R, t) for _, R, t in zip(*sim.odometry_measurements())])
 
         self.assertEqual(len(t_sys), len(t_sim))
@@ -115,12 +115,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions)
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_no_marginal2(self):
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=212)
@@ -128,12 +130,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions)
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_no_marginal3(self):
         sim = new_simulation(point_dim=1, landmark_dim=3, seed=213)
@@ -141,12 +145,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions)
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_no_marginal4(self):
         sim = new_simulation(point_dim=3, landmark_dim=3, seed=214)
@@ -154,12 +160,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions)
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_marginal_small(self):
         num_points = 100
@@ -171,12 +179,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-num_free_points:, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_marginal1(self):
         num_points = 2000
@@ -188,12 +198,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-num_free_points:, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_marginal2(self):
         num_points = 2000
@@ -205,12 +217,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-num_free_points:, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_marginal3(self):
         num_points = 2000
@@ -222,12 +236,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-num_free_points:, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_marginal4(self):
         num_points = 2000
@@ -239,12 +255,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-num_free_points:, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-num_free_points:, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_over_marginal1(self):
         num_points = 2000
@@ -256,12 +274,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_over_marginal2(self):
         num_points = 2000
@@ -273,12 +293,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_over_marginal3(self):
         num_points = 2000
@@ -290,12 +312,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_over_marginal4(self):
         num_points = 2000
@@ -307,12 +331,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_under_marginal1(self):
         num_points = 2000
@@ -324,12 +350,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_under_marginal2(self):
         num_points = 2000
@@ -341,12 +369,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_under_marginal3(self):
         num_points = 2000
@@ -358,12 +388,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_under_marginal4(self):
         num_points = 2000
@@ -375,12 +407,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.concatenate((np.ravel(sim.landmark_positions), np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])))
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
+        p = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_all_marginal1(self):
         num_points = 2000
@@ -392,12 +426,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.ravel(sim.landmark_positions)
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size, Am.shape[1])
+        self.assertEqual(0, Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m), d))
 
     def test_all_marginal2(self):
         num_points = 2000
@@ -409,12 +445,14 @@ class TestObservationSystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.observation_system
-        x = np.ravel(sim.landmark_positions)
+        Am, Ap, d = fg.observation_system()
+        m = np.ravel(sim.landmark_positions)
 
-        self.assertEqual(b.size, A.shape[0])
-        self.assertEqual(x.size, A.shape[1])
-        self.assertTrue(np.allclose(A.dot(x), b))
+        self.assertEqual(d.size, Am.shape[0])
+        self.assertEqual(d.size, Ap.shape[0])
+        self.assertEqual(m.size, Am.shape[1])
+        self.assertEqual(0, Ap.shape[1])
+        self.assertTrue(np.allclose(Am.dot(m), d))
 
 
 class TestOdometrySystem(unittest.TestCase):
@@ -425,7 +463,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions)
 
         self.assertEqual(b.size, A.shape[0])
@@ -438,7 +476,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions)
 
         self.assertEqual(b.size, A.shape[0])
@@ -451,7 +489,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions)
 
         self.assertEqual(b.size, A.shape[0])
@@ -464,7 +502,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions)
 
         self.assertEqual(b.size, A.shape[0])
@@ -481,7 +519,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-num_free_points:, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -498,7 +536,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-num_free_points:, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -515,7 +553,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-num_free_points:, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -532,7 +570,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-num_free_points:, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -549,7 +587,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -566,7 +604,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -583,7 +621,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -600,7 +638,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -617,7 +655,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -634,7 +672,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -651,7 +689,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -668,7 +706,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
         x = np.ravel(sim.point_positions[-(num_points - num_fixed_points):, :])
 
         self.assertEqual(b.size, A.shape[0])
@@ -685,7 +723,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(0, A.shape[1])
@@ -700,7 +738,7 @@ class TestOdometrySystem(unittest.TestCase):
         for f in sim.fix_points(list(range(num_fixed_points))).factors():
             fg.add_factor(f)
 
-        A, b = fg.odometry_system
+        A, b = fg.odometry_system()
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(0, A.shape[1])
@@ -726,7 +764,7 @@ class TestMerge(unittest.TestCase):
         diff = equiv_groups.symmetric_difference(fg_groups)
         self.assertTrue(len(diff) == 0)
 
-        A, b = fg.observation_system
+        A, b = fg.observation_system()
         x = np.concatenate((np.ravel(sim.unique_landmark_positions[unique_order, :]), np.ravel(sim.point_positions)))
 
         self.assertEqual(b.size, A.shape[0])
@@ -752,7 +790,7 @@ class TestMerge(unittest.TestCase):
         diff = equiv_groups.symmetric_difference(fg_groups)
         self.assertTrue(len(diff) == 0)
 
-        A, b = fg.observation_system
+        A, b = fg.observation_system()
         x = np.concatenate((np.ravel(sim.unique_landmark_positions[unique_order, :]), np.ravel(sim.point_positions)))
 
         self.assertEqual(b.size, A.shape[0])
@@ -785,7 +823,7 @@ class TestMerge(unittest.TestCase):
             diff = equiv_groups.symmetric_difference(fg_groups)
             self.assertTrue(len(diff) == 0)
 
-            A, b = fg.observation_system
+            A, b = fg.observation_system()
             x = np.concatenate((np.ravel(sim.unique_landmark_positions[unique_order, :]),
                                 np.ravel(sim.point_positions[:partition_indptr[i+1], :])))
 
@@ -802,7 +840,7 @@ class TestAccessSpeed(unittest.TestCase):
         fg = factorgraph.GaussianFactorGraph(free_point_window=10)
         for f in sim.factors():
             f.add_factor(f)
-            A, b = fg.observation_system
+            A, b = fg.observation_system()
 
         self.assertTrue(True)
 
