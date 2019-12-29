@@ -755,7 +755,7 @@ class TestMerge(unittest.TestCase):
         landmarks = sim.landmark_variables
         equiv_groups, equiv_pairs = sim.equivalences()
 
-        fg._merge_landmarks(equiv_pairs)
+        fg.merge_landmarks(equiv_pairs)
         unique_landmarks = fg.landmarks
         unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
 
@@ -781,7 +781,7 @@ class TestMerge(unittest.TestCase):
 
         equiv_groups, equiv_pairs = sim.equivalences()
 
-        fg._merge_landmarks(equiv_pairs)
+        fg.merge_landmarks(equiv_pairs)
         unique_landmarks = fg.landmarks
         unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
 
@@ -813,7 +813,7 @@ class TestMerge(unittest.TestCase):
 
             equiv_groups, equiv_pairs = sim.equivalences((0, partition_indptr[i+1]))
 
-            fg._merge_landmarks(equiv_pairs)
+            fg.merge_landmarks(equiv_pairs)
 
             unique_landmarks = fg.landmarks
             unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]

@@ -32,6 +32,8 @@ class GaussianFactorGraph(object):
         self._array_index = {'d': {}, 't': {}}  # map of point variables to rows in which they participate in a factor
         self._d = []
         self._t = []
+        self._sigma_d = []
+        self._sigma_t = []
 
         self.correspondence_map = UnionFind()
 
@@ -59,6 +61,7 @@ class GaussianFactorGraph(object):
                                  list(self._free_point_buffer.keys()).index(f.head)],
                                 [-f.A2.copy(), f.A1.copy()])
             self._t.append(f.b.copy())
+            self._sigma_t.append(f.sigma)
 
         elif isinstance(f, ObservationFactor):
 
@@ -76,6 +79,7 @@ class GaussianFactorGraph(object):
             self._Am.append_row(list(self._landmark_buffer.keys()).index(self.correspondence_map.find(f.head)), f.A1.copy())
             self._Ap.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2.copy())
             self._d.append(f.b.copy())
+            self._sigma_d.append(f.sigma)
 
         elif isinstance(f, PriorFactor):
 
@@ -87,6 +91,7 @@ class GaussianFactorGraph(object):
                 self._append_to_array_index(f.var, len(self._t), 't')
                 self._Bp.append_row(list(self._free_point_buffer.keys()).index(f.var), f.A)
                 self._t.append(f.b.copy())
+                self._sigma_t.append(f.sigma)
             else:
                 raise TypeError
 
@@ -179,7 +184,7 @@ class GaussianFactorGraph(object):
                     del array_index[point][i]
             A.remove_col(col)
 
-    def _merge_landmarks(self, pairs):
+    def merge_landmarks(self, pairs):
 
         for u, v in pairs:
             self.correspondence_map.union(u, v)

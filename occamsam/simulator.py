@@ -11,7 +11,7 @@ from utilities import random_groups, sample_pairs, UnionFind
 
 class Simulation(object):
 
-    def __init__(self, point_dim, landmark_dim, num_points, num_landmarks, observation_noise=0.0, odometry_noise=0.0):
+    def __init__(self, point_dim, landmark_dim, num_points, num_landmarks, observation_noise, odometry_noise, noise_matrix):
 
         self.point_dim = point_dim
         self.landmark_dim = landmark_dim
@@ -19,6 +19,7 @@ class Simulation(object):
         self.num_landmarks = num_landmarks
         self.observation_noise = observation_noise
         self.odometry_noise = odometry_noise
+        self.noise_matrix = noise_matrix
 
         self.num_unique_landmarks = int(0.2 * self.num_landmarks)
         self.num_classes = np.random.choice(10) + 1
@@ -89,19 +90,30 @@ class Simulation(object):
         else:
             rs = [np.array([1.]) for _ in self._point_pairs]
 
-        ts = [np.dot(rs[i].T, self.point_positions[v, :] - self.point_positions[u, :]) + self.odometry_noise * np.random.randn()
+        if self.noise_matrix == 'diag':
+            sigma = self.odometry_noise * np.random.rand(len(self._point_pairs))
+        else:
+            sigma = self.odometry_noise * np.ones(len(self._point_pairs))
+
+        ts = [np.dot(rs[i].T, self.point_positions[v, :] - self.point_positions[u, :]) + sigma[i] * np.random.randn()
               for i, (u, v) in enumerate(self._point_pairs)]
 
-        return self._point_pairs, rs, ts
+        return self._point_pairs, rs, ts, sigma
 
     def observation_measurements(self):
 
         hs = [self.landmark_orientations[v] for _, v in self._observation_pairs]
 
-        ds = [self.landmark_positions[v, :] - np.dot(self.landmark_orientations[v], self.point_positions[u, :]) + self.observation_noise * np.random.randn()
-              for (u, v) in self._observation_pairs]
+        if self.noise_matrix == 'diag':
+            sigma = self.observation_noise * np.random.rand(len(self._observation_pairs))
+        else:
+            sigma = self.observation_noise * np.ones(len(self._observation_pairs))
 
-        return self._observation_pairs, hs, ds
+        ds = [self.landmark_positions[v, :] - np.dot(self.landmark_orientations[v], self.point_positions[u, :]) +
+              sigma[i] * np.random.randn()
+              for i, (u, v) in enumerate(self._observation_pairs)]
+
+        return self._observation_pairs, hs, ds, sigma
 
     def fix_points(self, point_index):
         for i in point_index:
@@ -115,14 +127,16 @@ class Simulation(object):
 
     def factors(self, point_range=None):
 
-        odometry_factors = [OdometryFactor(self.point_variables[u], self.point_variables[v], R, t)
-                            for (u, v), R, t in zip(*self.odometry_measurements())]
-        observation_factors = [ObservationFactor(self.point_variables[u], self.landmark_variables[v], H, d)
-                               for (u, v), H, d in zip(*self.observation_measurements())]
+        odometry_factors = [OdometryFactor(self.point_variables[u], self.point_variables[v], R, t, sigma)
+                            for (u, v), R, t, sigma in zip(*self.odometry_measurements())]
+        observation_factors = [ObservationFactor(self.point_variables[u], self.landmark_variables[v], H, d, sigma)
+                               for (u, v), H, d, sigma in zip(*self.observation_measurements())]
 
         i = 0
         j = 0
-        factor_list = [[PriorFactor(self.point_variables[0], np.eye(self.point_dim), self.point_variables[0].position.copy())]]
+        init_factor = PriorFactor(self.point_variables[0], np.eye(self.point_dim),
+                                  self.point_variables[0].position.copy(), self.odometry_noise)
+        factor_list = [[init_factor]]
         for pv in self.point_variables:
 
             sync_factors = []
@@ -169,7 +183,8 @@ MAX_POINTS = 2000
 MAX_LANDMARKS = 500
 
 
-def new_simulation(point_dim=None, landmark_dim=None, num_points=None, num_landmarks=None, seed=None):
+def new_simulation(point_dim=None, landmark_dim=None, num_points=None, num_landmarks=None, seed=None,
+                   observation_noise=0.0, odometry_noise=0.0, noise_matrix='identity'):
     np.random.seed(seed)
 
     if point_dim is None:
@@ -185,4 +200,4 @@ def new_simulation(point_dim=None, landmark_dim=None, num_points=None, num_landm
         num_landmarks = np.random.choice(
             np.arange(np.floor_divide(MAX_LANDMARKS, 5), MAX_LANDMARKS + 1))
 
-    return Simulation(point_dim, landmark_dim, num_points, num_landmarks)
+    return Simulation(point_dim, landmark_dim, num_points, num_landmarks, observation_noise, odometry_noise, noise_matrix)

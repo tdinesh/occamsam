@@ -3,7 +3,7 @@ import numpy as np
 
 class PriorFactor(object):
 
-    def __init__(self, var, A, b):
+    def __init__(self, var, A, b, sigma=0.0):
         """
         Initializes a prior Gaussian factor on a single variable as follows
             exp^(|| A * x - b ||^2)
@@ -11,6 +11,7 @@ class PriorFactor(object):
         :param var: Variable corresponding to x
         :param A: Linear transformation of Variable x
         :param b: Prior
+        :param sigma: Noise
         """
 
         assert (A.shape[0] == b.size), "Measurement not in transformation codomain"
@@ -20,10 +21,12 @@ class PriorFactor(object):
         self.A = A
         self.b = b
 
+        self.sigma = sigma
+
 
 class LinearFactor(object):
 
-    def __init__(self, head, tail, A1, A2, b):
+    def __init__(self, head, tail, A1, A2, b, sigma=0.0):
         """
         Initializes a linear Gaussain factor between two variables, modeled as follows
             exp^(|| A1 * x1 - A2 * x2 - b ||^2)
@@ -33,6 +36,7 @@ class LinearFactor(object):
         :param A1: Linear transformation of Variable x1
         :param A2: Linear transformation of Variable x2
         :param b: Measurement vector
+        :param sigma: Measurement noise
         """
 
         assert (A1.shape[0] == b.size), "Measurement not in head transformation codomain"
@@ -47,10 +51,12 @@ class LinearFactor(object):
         self.A2 = A2
         self.b = b
 
+        self.sigma = sigma
+
 
 class OdometryFactor(LinearFactor):
 
-    def __init__(self, start, end, R, t):
+    def __init__(self, start, end, R, t, sigma=0.0):
         """
         Odometry factors are linear Gaussian factors between pairs of position variables modeled as follows
             exp^(|| p2 - p1 - R*t ||^2)
@@ -62,17 +68,18 @@ class OdometryFactor(LinearFactor):
         :param end: Ending PointVariable
         :param R: Coordinate frame to express the displacement in
         :param t: Displacement/translation vector
+        :param sigma: Odometry_noise
         """
 
         t_ = np.dot(R, t)
 
         I = np.eye(t_.shape[0], start.dim)
-        super(OdometryFactor, self).__init__(end, start, I, I, t_)
+        super(OdometryFactor, self).__init__(end, start, I, I, t_, sigma)
 
 
 class ObservationFactor(LinearFactor):
 
-    def __init__(self, point, landmark, R, d):
+    def __init__(self, point, landmark, R, d, sigma=0.0):
         """
         Observation factors are linear Gaussian factors between position and landmark variables
             exp^(|| m  -  R * p  - d ||^2)
@@ -83,8 +90,9 @@ class ObservationFactor(LinearFactor):
         :param landmark: LandmarkVariable which is observed
         :param R: Coordinate frame of the landmark w.r.t. to the position
         :param d: Distance between the position and the closest point of the landmark
+        :param sigma: Observation noise
         """
 
         # TODO When |d| > |m|, this will pick up the first |m| components... is that the bx we want?
         I = np.eye(d.shape[0], landmark.dim)
-        super(ObservationFactor, self).__init__(landmark, point, I, R, d)
+        super(ObservationFactor, self).__init__(landmark, point, I, R, d, sigma)
