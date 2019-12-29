@@ -235,9 +235,10 @@ class GaussianFactorGraph(object):
 
         Am = Am.tocsr()
         Ap = sp.sparse.bmat([[row_padding, None], [Ap, col_padding]]).tocsr()
-        d = np.block(self._d)
+        d = np.block(self._d if len(self._d) > 0 else np.array([]))
+        sigma_d = np.block(self._sigma_d if len(self._sigma_d) > 0 else np.array([]))
 
-        return Am, Ap, d
+        return Am, Ap, d, sigma_d
 
     def odometry_system(self):
         """
@@ -258,8 +259,10 @@ class GaussianFactorGraph(object):
         """
 
         Bp = self._Bp.to_bsr().tocsr()
-        t = np.block(self._t)[-Bp.shape[0]:]
-        return Bp, t
+        t = np.block(self._t if len(self._t) > 0 else np.array([]))[-Bp.shape[0]:]
+        sigma_t = np.block(self._sigma_t if len(self._sigma_t) > 0 else np.array([]))
+
+        return Bp, t, sigma_t
 
     @property
     def points(self):

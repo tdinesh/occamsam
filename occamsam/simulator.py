@@ -95,9 +95,13 @@ class Simulation(object):
         else:
             sigma = self.odometry_noise * np.ones((len(self._point_pairs), self.point_dim))
 
-        ts = [np.dot(rs[i].T, self.point_positions[v, :] - self.point_positions[u, :]) +
-              np.multiply(sigma[i, :], np.random.randn(self.point_dim))
-              for i, (u, v) in enumerate(self._point_pairs)]
+        ts = []
+        for i, (u, v) in enumerate(self._point_pairs):
+            t = np.dot(rs[i].T, self.point_positions[v, :] - self.point_positions[u, :]) + \
+                np.multiply(sigma[i, :], np.random.randn(self.point_dim))
+            if t.size == 1:
+                t = t[0]
+            ts.append(t)
 
         return self._point_pairs, rs, ts, sigma
 
@@ -110,9 +114,13 @@ class Simulation(object):
         else:
             sigma = self.observation_noise * np.ones((len(self._observation_pairs), self.landmark_dim))
 
-        ds = [self.landmark_positions[v, :] - np.dot(self.landmark_orientations[v], self.point_positions[u, :]) +
-              np.multiply(sigma[i, :], np.random.randn(self.landmark_dim))
-              for i, (u, v) in enumerate(self._observation_pairs)]
+        ds = []
+        for i, (u, v) in enumerate(self._observation_pairs):
+            d = self.landmark_positions[v, :] - np.dot(self.landmark_orientations[v], self.point_positions[u, :]) + \
+                np.multiply(sigma[i, :], np.random.randn(self.landmark_dim))
+            if d.size == 1:
+                d = d[0]
+            ds.append(d)
 
         return self._observation_pairs, hs, ds, sigma
 
@@ -137,7 +145,7 @@ class Simulation(object):
         j = 0
         init_factor = PriorFactor(self.point_variables[0], np.eye(self.point_dim),
                                   self.point_variables[0].position.copy(), self.odometry_noise * np.ones(self.point_dim))
-        factor_list = [[init_factor]]
+        factor_list = []
         for pv in self.point_variables:
 
             sync_factors = []
@@ -154,7 +162,7 @@ class Simulation(object):
             start, stop = point_range
             factor_list = factor_list[start:stop]
 
-        return chain(*factor_list)
+        return chain([init_factor], *factor_list)
 
     def equivalences(self, point_range=None):
 

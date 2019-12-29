@@ -71,10 +71,9 @@ class OdometryFactor(LinearFactor):
         :param sigma: Odometry_noise
         """
 
-        if isinstance(t, np.ndarray) and t.size == 1:
-            t = t[0]
-
         t_ = np.dot(R, t)
+        if np.isscalar(t_):
+            t_ = np.array([t_])
 
         I = np.eye(t_.shape[0], start.dim)
         super(OdometryFactor, self).__init__(end, start, I, I, t_, sigma)
@@ -95,6 +94,9 @@ class ObservationFactor(LinearFactor):
         :param d: Distance between the position and the closest point of the landmark
         :param sigma: Observation noise
         """
+
+        if np.isscalar(d):
+            d = np.array([d])
 
         # TODO When |d| > |m|, this will pick up the first |m| components... is that the bx we want?
         I = np.eye(d.shape[0], landmark.dim)
