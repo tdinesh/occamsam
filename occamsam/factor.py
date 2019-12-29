@@ -71,6 +71,9 @@ class OdometryFactor(LinearFactor):
         :param sigma: Odometry_noise
         """
 
+        if isinstance(t, np.ndarray) and t.size == 1:
+            t = t[0]
+
         t_ = np.dot(R, t)
 
         I = np.eye(t_.shape[0], start.dim)

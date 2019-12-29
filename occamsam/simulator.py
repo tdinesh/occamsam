@@ -91,11 +91,12 @@ class Simulation(object):
             rs = [np.array([1.]) for _ in self._point_pairs]
 
         if self.noise_matrix == 'diag':
-            sigma = self.odometry_noise * np.random.rand(len(self._point_pairs))
+            sigma = self.odometry_noise * np.random.rand(len(self._point_pairs), self.point_dim)
         else:
-            sigma = self.odometry_noise * np.ones(len(self._point_pairs))
+            sigma = self.odometry_noise * np.ones((len(self._point_pairs), self.point_dim))
 
-        ts = [np.dot(rs[i].T, self.point_positions[v, :] - self.point_positions[u, :]) + sigma[i] * np.random.randn()
+        ts = [np.dot(rs[i].T, self.point_positions[v, :] - self.point_positions[u, :]) +
+              np.multiply(sigma[i, :], np.random.randn(self.point_dim))
               for i, (u, v) in enumerate(self._point_pairs)]
 
         return self._point_pairs, rs, ts, sigma
@@ -105,12 +106,12 @@ class Simulation(object):
         hs = [self.landmark_orientations[v] for _, v in self._observation_pairs]
 
         if self.noise_matrix == 'diag':
-            sigma = self.observation_noise * np.random.rand(len(self._observation_pairs))
+            sigma = self.observation_noise * np.random.rand(len(self._observation_pairs), self.landmark_dim)
         else:
-            sigma = self.observation_noise * np.ones(len(self._observation_pairs))
+            sigma = self.observation_noise * np.ones((len(self._observation_pairs), self.landmark_dim))
 
         ds = [self.landmark_positions[v, :] - np.dot(self.landmark_orientations[v], self.point_positions[u, :]) +
-              sigma[i] * np.random.randn()
+              np.multiply(sigma[i, :], np.random.randn(self.landmark_dim))
               for i, (u, v) in enumerate(self._observation_pairs)]
 
         return self._observation_pairs, hs, ds, sigma
@@ -135,7 +136,7 @@ class Simulation(object):
         i = 0
         j = 0
         init_factor = PriorFactor(self.point_variables[0], np.eye(self.point_dim),
-                                  self.point_variables[0].position.copy(), self.odometry_noise)
+                                  self.point_variables[0].position.copy(), self.odometry_noise * np.ones(self.point_dim))
         factor_list = [[init_factor]]
         for pv in self.point_variables:
 
