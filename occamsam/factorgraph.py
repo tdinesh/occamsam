@@ -4,7 +4,7 @@ import scipy as sp
 import scipy.sparse
 from collections import OrderedDict
 
-from factor import LinearFactor, ObservationFactor, OdometryFactor
+from factor import LinearFactor, ObservationFactor, OdometryFactor, PriorFactor
 from variable import LandmarkVariable, PointVariable
 from sparse import DBSRMatrix
 from utilities import UnionFind
@@ -19,11 +19,13 @@ class GaussianFactorGraph(object):
         else:
             self._free_point_window = free_point_window
 
+        self.point_dim = None
         self._points = OrderedDict()
         self._free_point_buffer = OrderedDict()  # map of point variables to their associated column in A and B
         self._Ap = DBSRMatrix()
         self._Bp = DBSRMatrix()
 
+        self.landmark_dim = None
         self._landmark_buffer = OrderedDict()  # map of landmark variables to their associated column in H
         self._Am = DBSRMatrix()
 
@@ -39,22 +41,15 @@ class GaussianFactorGraph(object):
 
         :param f: OdometryFactor or ObservationFactor to append to the sparse system
         """
-        assert (isinstance(f, LinearFactor)), "Expected type LinearFactor, got %s" % type(f)
+        assert (isinstance(f, (PriorFactor, LinearFactor))), "Expected Factor type, got %s" % type(f)
 
         if isinstance(f, OdometryFactor):
 
-            if len(self._t) == 0:
-                if f.tail.position is None:
-                    init_position = np.zeros(f.tail.dim)
-                else:
-                    init_position = f.tail.position
-                self._append_to_free_buffer(f.tail)
-                self._append_to_array_index(f.tail, 0, 't')
-                self._Bp.append_row(0, np.eye(len(init_position)))
-                self._t.append(init_position)
+            if self.point_dim is None:
+                self.point_dim = f.tail.dim
+            assert (self.point_dim == f.head.dim), "Expected head of dimension %d, got %d" % (self.point_dim, f.head.dim)
 
             row = len(self._t)
-
             self._append_to_free_buffer(f.tail)
             self._append_to_array_index(f.tail, row, 't')
             self._append_to_free_buffer(f.head)
@@ -62,18 +57,38 @@ class GaussianFactorGraph(object):
 
             self._Bp.append_row([list(self._free_point_buffer.keys()).index(f.tail),
                                  list(self._free_point_buffer.keys()).index(f.head)],
-                                [-f.A2, f.A1])
-            self._t.append(f.b)
+                                [-f.A2.copy(), f.A1.copy()])
+            self._t.append(f.b.copy())
 
         elif isinstance(f, ObservationFactor):
+
+            if self.point_dim is None:
+                self.point_dim = f.tail.dim
+            assert (self.point_dim == f.tail.dim), "Expected point of dimension %d, got %d" % (self.point_dim, f.tail.dim)
+            if self.landmark_dim is None:
+                self.landmark_dim = f.head.dim
+            assert (self.landmark_dim == f.head.dim), "Expected landmark of dimension %d, got %d" % (self.landmark_dim, f.head.dim)
 
             self._append_to_landmark_buffer(f.head)
             self._append_to_free_buffer(f.tail)
             self._append_to_array_index(f.tail, len(self._d), 'd')
 
-            self._Am.append_row(list(self._landmark_buffer.keys()).index(self.correspondence_map.find(f.head)), f.A1)
-            self._Ap.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2)
-            self._d.append(f.b)
+            self._Am.append_row(list(self._landmark_buffer.keys()).index(self.correspondence_map.find(f.head)), f.A1.copy())
+            self._Ap.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2.copy())
+            self._d.append(f.b.copy())
+
+        elif isinstance(f, PriorFactor):
+
+            if isinstance(f.var, PointVariable):
+                if self.point_dim is None:
+                    self.point_dim = f.var.dim
+                assert (self.point_dim == f.var.dim), "Expected point of dimension %d, got %d" % (self.point_dim, f.var.dim)
+                self._append_to_free_buffer(f.var)
+                self._append_to_array_index(f.var, len(self._t), 't')
+                self._Bp.append_row(list(self._free_point_buffer.keys()).index(f.var), f.A)
+                self._t.append(f.b.copy())
+            else:
+                raise TypeError
 
         else:
             raise TypeError
@@ -240,10 +255,6 @@ class GaussianFactorGraph(object):
         Bp = self._Bp.to_bsr().tocsr()
         t = np.block(self._t)[-Bp.shape[0]:]
         return Bp, t
-
-    @property
-    def num_free_points(self):
-        return len(self._free_point_buffer)
 
     @property
     def points(self):

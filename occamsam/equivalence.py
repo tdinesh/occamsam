@@ -4,7 +4,7 @@ import scipy.sparse
 from itertools import combinations
 
 
-class Compose(object):
+class ComposeWeight(object):
 
     def __init__(self, transforms):
         self.W = transforms[0].W
@@ -17,7 +17,8 @@ class Compose(object):
 
 class Identity(object):
 
-    def __init__(self, equiv_pairs):
+    def __init__(self, landmarks):
+        equiv_pairs = list(combinations(landmarks, 2))
         n = len(equiv_pairs)
         self.W = sp.sparse.identity(n, format='dia')
 
@@ -27,9 +28,9 @@ class Identity(object):
 
 class ExpDistanceWeight(object):
 
-    def __init__(self, equiv_pairs, sigma=1):
+    def __init__(self, landmarks, sigma=1):
         weights = []
-        for mi, mj in equiv_pairs:
+        for mi, mj in combinations(landmarks, 2):
             weights.append(np.exp(-(np.linalg.norm(mi.postion - mj.position) / (2 * sigma))**2))
         self.W = sp.sparse.diags([weights], format='dia')
 
@@ -39,9 +40,9 @@ class ExpDistanceWeight(object):
 
 class SumMassWeight(object):
 
-    def __init__(self, equiv_pairs):
+    def __init__(self, landmarks):
         weights = []
-        for mi, mj in equiv_pairs:
+        for mi, mj in combinations(landmarks, 2):
             weights.append(mi.mass + mj.mass)
         self.W = sp.sparse.diags([weights], format='dia')
 
