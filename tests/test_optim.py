@@ -20,7 +20,7 @@ class TestLeastSquares(unittest.TestCase):
         optimizer.update()
 
         m_hat = np.concatenate([m.position for m in fg.landmarks])
-        p_hat = np.concatenate([m.position for m in fg.points])
+        p_hat = np.concatenate([p.position for p in fg.points])
 
         m, p = np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)
 
@@ -42,7 +42,7 @@ class TestLeastSquares(unittest.TestCase):
         optimizer.update()
 
         m_hat = np.concatenate([m.position for m in fg.landmarks])
-        p_hat = np.concatenate([m.position for m in fg.points])
+        p_hat = np.concatenate([p.position for p in fg.points])
 
         m, p = np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)
 
@@ -53,6 +53,36 @@ class TestLeastSquares(unittest.TestCase):
 
         self.assertTrue(np.linalg.norm(optimizer.res_d)**2 < len(optimizer.res_d) * 9 * observation_noise**2)
         self.assertTrue(np.linalg.norm(optimizer.res_t)**2 < len(optimizer.res_t) * 9 * odometry_noise**2)
+
+
+class TestWeightedLeastSquares(unittest.TestCase):
+
+    def test_noise(self):
+        observation_noise = 0.05
+        odometry_noise = 0.06
+
+        sim = new_simulation(point_dim=3, landmark_dim=1, seed=11, observation_noise=observation_noise,
+                             odometry_noise=odometry_noise, noise_matrix='diag')
+        fg = factorgraph.GaussianFactorGraph()
+        for f in sim.factors():
+            fg.add_factor(f)
+
+        optimizer = optim.WeightedLeastSquares(fg)
+        optimizer.optimize()
+        optimizer.update()
+
+        m_hat = np.concatenate([m.position for m in fg.landmarks])
+        p_hat = np.concatenate([p.position for p in fg.points])
+
+        m, p = np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)
+
+        mu_m_hat = np.mean(m - m_hat)
+        sigma_m_hat = np.sqrt(np.linalg.norm(m - m_hat) ** 2 / len(m))
+        mu_p_hat = np.mean(p - p_hat)
+        sigma_p_hat = np.sqrt(np.linalg.norm(p - p_hat) ** 2 / len(p))
+
+        self.assertTrue(np.linalg.norm(optimizer.res_d) ** 2 < len(optimizer.res_d) * 9 * observation_noise ** 2)
+        self.assertTrue(np.linalg.norm(optimizer.res_t) ** 2 < len(optimizer.res_t) * 9 * odometry_noise ** 2)
 
 
 
