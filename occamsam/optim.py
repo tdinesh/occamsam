@@ -1,6 +1,6 @@
 import cvxpy as cp
 import cvxpy.atoms
-from cvxpy.atoms import norm, mixed_norm
+from cvxpy.atoms import norm, mixed_norm, sum_squares
 from cvxpy.atoms.affine.vec import vec
 
 import numpy as np
@@ -10,6 +10,7 @@ import scipy.sparse.linalg
 
 import equivalence
 from factorgraph import GaussianFactorGraph
+
 
 class WeightedLeastSquares(object):
 
@@ -49,16 +50,20 @@ class LeastSquares(object):
         Am, Ap, d, _ = self.graph.observation_system()
         Bp, t, _ = self.graph.odometry_system()
 
-        A = sp.sparse.bmat([[Am, Ap], [None, Bp]])
-        b = np.concatenate((d, t))
-        x = sp.sparse.linalg.lsqr(A, b)[0]
-        m, p = x[:num_landmarks*landmark_dim], x[num_landmarks*landmark_dim:]
+        M = cp.Variable((landmark_dim, num_landmarks))
+        P = cp.Variable((point_dim, num_points))
+        objective = cp.Minimize(sum_squares(Am * vec(M) + Ap * vec(P) - d) + sum_squares(Bp * vec(P) - t))
+        problem = cp.Problem(objective)
+        problem.solve()
+
+        self.M = M.value
+        self.P = P.value
+
+        m = self.M.ravel(order='F')
+        p = self.P.ravel(order='F')
 
         self.res_d = Am.dot(m) + Ap.dot(p) - d
         self.res_t = Bp.dot(p) - t
-
-        self.M = np.reshape(m, (num_landmarks, landmark_dim))
-        self.P = np.reshape(p, (num_points, point_dim))
 
     def update(self):
 
@@ -67,15 +72,15 @@ class LeastSquares(object):
 
         for i, m in enumerate(landmarks):
             if m.position is None:
-                m.position = self.M[i, :].copy()
+                m.position = self.M[:, i].copy()
             else:
-                m.position[:] = self.M[i, :].copy()
+                m.position[:] = self.M[:, i].copy()
 
         for i, p in enumerate(points):
             if p.position is None:
-                p.position = self.P[i, :].copy()
+                p.position = self.P[:, i].copy()
             else:
-                p.position[:] = self.P[i, :].copy()
+                p.position[:] = self.P[:, i].copy()
 
 
 class Occam(object):

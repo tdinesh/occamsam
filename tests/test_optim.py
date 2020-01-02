@@ -48,14 +48,12 @@ class TestLeastSquares(unittest.TestCase):
 
         mu_m_hat = np.mean(m - m_hat)
         sigma_m_hat = np.sqrt(np.linalg.norm(m - m_hat)**2 / len(m))
-        mu_m_hat = np.mean(p - p_hat)
+        mu_p_hat = np.mean(p - p_hat)
         sigma_p_hat = np.sqrt(np.linalg.norm(p - p_hat)**2 / len(p))
 
         self.assertTrue(np.linalg.norm(optimizer.res_d)**2 < len(optimizer.res_d) * 9 * observation_noise**2)
         self.assertTrue(np.linalg.norm(optimizer.res_t)**2 < len(optimizer.res_t) * 9 * odometry_noise**2)
 
-
-        self.assertTrue(True)
 
 
 
