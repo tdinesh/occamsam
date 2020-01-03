@@ -125,6 +125,11 @@ class Occam(object):
         assert isinstance(graph, GaussianFactorGraph), "Expected type GaussainFactorGraph for graph, got %s" % type(graph)
         self.graph = graph
 
+        self.M = None
+        self.P = None
+        self.res_d = None
+        self.res_t = None
+
     def optimize(self):
 
         points = self.graph.points
@@ -136,14 +141,18 @@ class Occam(object):
         landmark_dim = self.graph.landmark_dim
 
         E = equivalence.equivalence_matrix(landmarks)
-        W = equivalence.ComposeWeight([equivalence.ExpDistanceWeight(landmarks), equivalence.SumMassWeight(landmarks)]).W
-        Am, Ap, d = self.graph.observation_system()
-        Bp, t = self.graph.odometry_system()
+        # W = equivalence.ComposeWeight([equivalence.ExpDistanceWeight(landmarks), equivalence.SumMassWeight(landmarks)]).W
+        W = equivalence.Identity(landmarks).W
+        Am, Ap, d, sigma_d = self.graph.observation_system()
+        Bp, t, sigma_t = self.graph.odometry_system()
 
-        M = cp.Variable((num_landmarks, landmark_dim))
-        P = cp.Variable((num_points, point_dim))
-        objective = cp.Minimize(mixed_norm(W * E * M.T))
-        constraints = [norm(Am * vec(M) + Ap * vec(P) - d)]
+        M = cp.Variable((landmark_dim, num_landmarks))
+        P = cp.Variable((point_dim, num_points))
+        objective = cp.Minimize(mixed_norm(M * E.T * W))
+        constraints = [norm(Am * vec(M) + Ap * vec(P) - d) <= 3 * np.linalg.norm(sigma_d),
+                       norm(Bp * vec(P) - t) <= 3 * np.linalg.norm(sigma_t)]
+        problem = cp.Problem(objective, constraints)
+        problem.solve(verbose=True)
 
-
-
+        self.M = M.value
+        self.P = P.value

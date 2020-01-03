@@ -6,6 +6,7 @@ import optim
 import factorgraph
 from simulator import new_simulation
 
+
 class TestLeastSquares(unittest.TestCase):
 
     def test_no_noise(self):
@@ -85,6 +86,24 @@ class TestWeightedLeastSquares(unittest.TestCase):
         self.assertTrue(np.linalg.norm(optimizer.res_t) ** 2 < len(optimizer.res_t) * 9 * odometry_noise ** 2)
 
 
+class TestOccam(unittest.TestCase):
+
+    def test_noise(self):
+        observation_noise = 0.05
+        odometry_noise = 0.06
+
+        sim = new_simulation(point_dim=3, landmark_dim=1, seed=11, observation_noise=observation_noise,
+                             odometry_noise=odometry_noise, noise_matrix='diag')
+        fg = factorgraph.GaussianFactorGraph()
+        for f in sim.factors():
+            fg.add_factor(f)
+
+        optimizer = optim.WeightedLeastSquares(fg)
+        optimizer.optimize()
+        optimizer.update()
+
+        optimizer = optim.Occam(fg)
+        optimizer.optimize()
 
 
 if __name__ == '__main__':
