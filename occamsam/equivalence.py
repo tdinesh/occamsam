@@ -31,7 +31,7 @@ def equivalence_matrix(landmarks, transforms=[identity]):
     index_pairs = np.array(index_pairs)
     weights = np.array(weights)
 
-    zero_mask = np.isclose(weights, np.zeros(len(weights)))
+    zero_mask = np.logical_not(np.isclose(weights, np.zeros(len(weights))))
     index_pairs = index_pairs[zero_mask, :]
     weights = weights[zero_mask]
 
