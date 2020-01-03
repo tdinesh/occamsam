@@ -2,6 +2,7 @@ import cvxpy as cp
 import cvxpy.atoms
 from cvxpy.atoms import norm, mixed_norm, sum_squares
 from cvxpy.atoms.affine.vec import vec
+from cvxpy.atoms.affine.binary_operators import matmul
 
 import numpy as np
 import scipy as sp
@@ -140,15 +141,17 @@ class Occam(object):
         num_landmarks = len(landmarks)
         landmark_dim = self.graph.landmark_dim
 
-        E, W = equivalence.equivalence_matrix(landmarks, transforms=[equivalence.exp_distance])
+        E, W = equivalence.equivalence_matrix(landmarks, transforms=[equivalence.sum_mass, equivalence.exp_distance])
+        # E, W = equivalence.equivalence_matrix(landmarks, transforms=[equivalence.exp_distance])
+        # E, W = equivalence.equivalence_matrix(landmarks, transforms=[equivalence.sum_mass])
         Am, Ap, d, sigma_d = self.graph.observation_system()
         Bp, t, sigma_t = self.graph.odometry_system()
 
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
-        objective = cp.Minimize(mixed_norm(M * E.T * W))
-        constraints = [norm(Am * vec(M) + Ap * vec(P) - d) <= 3 * np.linalg.norm(sigma_d),
-                       norm(Bp * vec(P) - t) <= 3 * np.linalg.norm(sigma_t)]
+        objective = cp.Minimize(mixed_norm(matmul(matmul(W, E), M.T)))
+        constraints = [norm(matmul(Am, vec(M)) + matmul(Ap, vec(P)) - d) <= 3 * np.linalg.norm(sigma_d),
+                       norm(matmul(Bp, vec(P)) - t) <= 3 * np.linalg.norm(sigma_t)]
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=True)
 
