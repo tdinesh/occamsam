@@ -140,9 +140,7 @@ class Occam(object):
         num_landmarks = len(landmarks)
         landmark_dim = self.graph.landmark_dim
 
-        E = equivalence.equivalence_matrix(landmarks)
-        # W = equivalence.ComposeWeight([equivalence.ExpDistanceWeight(landmarks), equivalence.SumMassWeight(landmarks)]).W
-        W = equivalence.Identity(landmarks).W
+        E, W = equivalence.equivalence_matrix(landmarks, transforms=[equivalence.exp_distance])
         Am, Ap, d, sigma_d = self.graph.observation_system()
         Bp, t, sigma_t = self.graph.odometry_system()
 
