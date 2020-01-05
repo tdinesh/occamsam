@@ -157,3 +157,35 @@ class Occam(object):
 
         self.M = M.value
         self.P = P.value
+
+        E_ = E[np.abs(np.linalg.norm(E * self.M.T, axis=1)) < 0.01, :]
+        M = cp.Variable((landmark_dim, num_landmarks))
+        P = cp.Variable((point_dim, num_points))
+        objective = cp.Minimize(mixed_norm(matmul(matmul(W, E), M.T)))
+        objective = cp.Minimize(sum_squares(Am * vec(M) + Ap * vec(P) - d) + sum_squares(Bp * vec(P) - t))
+        constraints = [matmul(E, M.T) == 0]
+        problem = cp.Problem(objective, constraints)
+        problem.solve()
+
+        self.M = M.value
+        self.P = P.value
+
+        m = self.M.ravel(order='F')
+        p = self.P.ravel(order='F')
+
+        self.res_d = Am.dot(m) + Ap.dot(p) - d
+        self.res_t = Bp.dot(p) - t
+
+    def update(self):
+
+        for i, m in enumerate(self.graph.landmarks):
+            if m.position is None:
+                m.position = self.M[:, i].copy()
+            else:
+                m.position[:] = self.M[:, i].copy()
+
+        for i, p in enumerate(self.graph.points):
+            if p.position is None:
+                p.position = self.P[:, i].copy()
+            else:
+                p.position[:] = self.P[:, i].copy()

@@ -10,7 +10,8 @@ def identity(mi, mj):
 
 def exp_distance(mi, mj):
     sigma = 1
-    return np.exp(-(np.linalg.norm(mi.position - mj.position) / (2 * sigma)) ** 2)
+    return np.exp(-(np.linalg.norm(mi.position - mj.position) ** 2 / (2 * (sigma ** 2)))) \
+        if np.linalg.norm(mi.position - mj.position) < 3 * sigma else 0
 
 
 def sum_mass(mi, mj):

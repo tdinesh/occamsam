@@ -104,6 +104,14 @@ class TestOccam(unittest.TestCase):
 
         optimizer = optim.Occam(fg)
         optimizer.optimize()
+        optimizer.update()
+
+        m_hat = np.concatenate([m.position for m in fg.landmarks])
+        p_hat = np.concatenate([p.position for p in fg.points])
+
+        m, p = np.ravel(sim.landmark_positions), np.ravel(sim.point_positions)
+
+        print('yes')
 
 
 if __name__ == '__main__':
