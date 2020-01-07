@@ -143,8 +143,8 @@ class TestWeightedLeastSquares(unittest.TestCase):
         self.assertTrue(np.allclose(p, p_hat, atol=1e-3))
 
     def test_noise1(self):
-        observation_noise = 0.05
-        odometry_noise = 0.06
+        observation_noise = 0.01
+        odometry_noise = 0.02
 
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=11, observation_noise=observation_noise,
                              odometry_noise=odometry_noise, noise_matrix='diag')
@@ -262,10 +262,11 @@ class TestOccam(unittest.TestCase):
         self.assertTrue(np.allclose(m, m_hat))
 
     def test_noise(self):
-        observation_noise = 0.1
-        odometry_noise = 0.2
+        observation_noise = 0.01
+        odometry_noise = 0.02
 
-        sim = new_simulation(point_dim=3, landmark_dim=1, seed=11, observation_noise=observation_noise,
+        # 11
+        sim = new_simulation(point_dim=3, landmark_dim=1, seed=16, observation_noise=observation_noise,
                              odometry_noise=odometry_noise, noise_matrix='diag')
         fg = factorgraph.GaussianFactorGraph()
         for f in sim.factors():

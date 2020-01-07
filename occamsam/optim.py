@@ -46,13 +46,14 @@ class WeightedLeastSquares(object):
         Am, Ap, d, sigma_d = self.graph.observation_system()
         Bp, t, sigma_t = self.graph.odometry_system()
 
-        eps = 1e-3
-        S_d, S_t = sp.sparse.diags(1 / (sigma_d + eps)), sp.sparse.diags(1 / (sigma_t + eps))
+        eps_d = 1e-3 if np.linalg.norm(sigma_d) < 1e-3 else 0
+        eps_t = 1e-3 if np.linalg.norm(sigma_t) < 1e-3 else 0
+        S_d, S_t = sp.sparse.diags(1 / (sigma_d + eps_d)), sp.sparse.diags(1 / (sigma_t + eps_t))
 
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
         objective = cp.Minimize(
-            sum_squares(S_d * (Am * vec(M) + Ap * vec(P) - d)) + sum_squares(S_t * (Bp * vec(P) - t)))
+            sum_squares(S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
         problem = cp.Problem(objective)
         problem.solve(verbose=self._verbosity, solver=self._solver)
 
@@ -188,8 +189,9 @@ class Occam(object):
         Am, Ap, d, sigma_d = self.graph.observation_system()
         Bp, t, sigma_t = self.graph.odometry_system()
 
-        eps = 1e-3
-        S_d, S_t = sp.sparse.diags(1 / (sigma_d + eps)), sp.sparse.diags(1 / (sigma_t + eps))
+        eps_d = 1e-3 if np.linalg.norm(sigma_d) < 1e-3 else 0
+        eps_t = 1e-3 if np.linalg.norm(sigma_t) < 1e-3 else 0
+        S_d, S_t = sp.sparse.diags(1 / (sigma_d + eps_d)), sp.sparse.diags(1 / (sigma_t + eps_t))
 
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
@@ -200,12 +202,11 @@ class Occam(object):
         problem.solve(verbose=self._verbosity, solver=self._solver)
 
         E_ = E[np.abs(np.linalg.norm(E * M.value.T, axis=1)) < 0.001, :]
-        M = cp.Variable((landmark_dim, num_landmarks))
-        P = cp.Variable((point_dim, num_points))
-        objective = cp.Minimize(sum_squares((Am * vec(M)) + (Ap * vec(P)) - d) + sum_squares((Bp * vec(P)) - t))
+        objective = cp.Minimize(
+            sum_squares(S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
         constraints = [E_ * M.T == 0]
         problem = cp.Problem(objective, constraints)
-        problem.solve(verbose=self._verbosity, solver=self._solver)
+        problem.solve(verbose=self._verbosity, solver=self._solver, warm_start=True)
 
         self.M = M.value
         self.P = P.value
