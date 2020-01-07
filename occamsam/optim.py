@@ -2,7 +2,6 @@ import cvxpy as cp
 import cvxpy.atoms
 from cvxpy.atoms import norm, mixed_norm, sum_squares
 from cvxpy.atoms.affine.vec import vec
-from cvxpy.atoms.affine.binary_operators import matmul
 
 import numpy as np
 import scipy as sp
@@ -189,19 +188,22 @@ class Occam(object):
         Am, Ap, d, sigma_d = self.graph.observation_system()
         Bp, t, sigma_t = self.graph.odometry_system()
 
+        eps = 1e-3
+        S_d, S_t = sp.sparse.diags(1 / (sigma_d + eps)), sp.sparse.diags(1 / (sigma_t + eps))
+
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
-        objective = cp.Minimize(mixed_norm(matmul(matmul(W, E), M.T)))
-        constraints = [norm(matmul(Am, vec(M)) + matmul(Ap, vec(P)) - d) <= 3 * np.linalg.norm(sigma_d),
-                       norm(matmul(Bp, vec(P)) - t) <= 3 * np.linalg.norm(sigma_t)]
+        objective = cp.Minimize(mixed_norm(W * E * M.T))
+        constraints = [norm((Am * vec(M)) + (Ap * vec(P)) - d) <= 2 * np.linalg.norm(sigma_d),
+                       norm((Bp * vec(P)) - t) <= 2 * np.linalg.norm(sigma_t)]
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=self._verbosity, solver=self._solver)
 
         E_ = E[np.abs(np.linalg.norm(E * M.value.T, axis=1)) < 0.001, :]
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
-        objective = cp.Minimize(sum_squares(Am * vec(M) + Ap * vec(P) - d) + sum_squares(Bp * vec(P) - t))
-        constraints = [matmul(E_, M.T) == 0]
+        objective = cp.Minimize(sum_squares((Am * vec(M)) + (Ap * vec(P)) - d) + sum_squares((Bp * vec(P)) - t))
+        constraints = [E_ * M.T == 0]
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=self._verbosity, solver=self._solver)
 
