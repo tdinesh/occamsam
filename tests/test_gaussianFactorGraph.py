@@ -896,6 +896,50 @@ class TestMerge(unittest.TestCase):
             self.assertEqual(m.size + p.size, Am.shape[1] + Ap.shape[1])
             self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
+    def test_merge_sequence_with_marginalization(self):
+        num_points = 1000
+        num_free_points = 15
+
+        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=414)
+        fg = factorgraph.GaussianFactorGraph(num_free_points)
+
+        landmarks = sim.landmark_variables
+
+        num_partitions = 100
+        partition_indptr = np.linspace(0, num_points, num_partitions + 1, dtype=np.int)
+
+        for i in range(num_partitions):
+
+            if i > 0:
+                sim.fix_points(list(range(partition_indptr[i-1], partition_indptr[i])))
+
+            for f in sim.factors((partition_indptr[i], partition_indptr[i+1])):
+                fg.add_factor(f)
+
+            equiv_groups, equiv_pairs = sim.equivalences((0, partition_indptr[i+1]))
+
+            fg.merge_landmarks(equiv_pairs)
+
+            unique_landmarks = fg.landmarks
+            unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
+
+            self.assertEqual(len(fg.correspondence_map.set_map().keys()), len(unique_landmarks))
+            fg_groups = set(frozenset(g) for g in fg.correspondence_map.set_map().values())
+            diff = equiv_groups.symmetric_difference(fg_groups)
+            self.assertTrue(len(diff) == 0)
+
+            Am, Ap, d, _ = fg.observation_system()
+            Bp, t, _ = fg.odometry_system()
+            m = np.ravel(sim.unique_landmark_positions[unique_order, :])
+            p = np.ravel(sim.point_positions[max(0, partition_indptr[i+1]-num_free_points):partition_indptr[i+1], :])
+
+            self.assertEqual(d.size, Am.shape[0])
+            self.assertEqual(d.size, Ap.shape[0])
+            self.assertEqual(m.size, Am.shape[1])
+            self.assertEqual(p.size, Ap.shape[1])
+            self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
+            self.assertTrue(np.allclose(Bp.dot(p), t))
+
 
 class TestAccessSpeed(unittest.TestCase):
 
