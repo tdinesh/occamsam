@@ -149,6 +149,10 @@ class Simulation(object):
         for pv in self.point_variables:
 
             sync_factors = []
+
+            if pv == init_factor.var:
+                sync_factors.append(init_factor)
+
             if pv == odometry_factors[i].head:
                 sync_factors.append(odometry_factors[i])
                 i += 1
@@ -162,7 +166,7 @@ class Simulation(object):
             start, stop = point_range
             factor_list = factor_list[start:stop]
 
-        return chain([init_factor], *factor_list)
+        return chain(*factor_list)
 
     def equivalences(self, point_range=None):
 

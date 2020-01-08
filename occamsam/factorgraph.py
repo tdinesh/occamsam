@@ -260,13 +260,17 @@ class GaussianFactorGraph(object):
 
         Bp = self._Bp.to_bsr().tocsr()
         t = np.block(self._t if len(self._t) > 0 else np.array([]))[-Bp.shape[0]:]
-        sigma_t = np.block(self._sigma_t if len(self._sigma_t) > 0 else np.array([]))
+        sigma_t = np.block(self._sigma_t if len(self._sigma_t) > 0 else np.array([]))[-Bp.shape[0]:]
 
         return Bp, t, sigma_t
 
     @property
     def points(self):
         return list(self._points.keys())
+
+    @property
+    def free_points(self):
+        return list(self._free_point_buffer.keys())
 
     @property
     def landmarks(self):

@@ -38,7 +38,7 @@ class WeightedLeastSquares(object):
 
     def optimize(self):
 
-        num_points = len(self.graph.points)
+        num_points = len(self.graph.free_points)
         point_dim = self.graph.point_dim
         num_landmarks = len(self.graph.landmarks)
         landmark_dim = self.graph.landmark_dim
@@ -74,7 +74,7 @@ class WeightedLeastSquares(object):
             else:
                 m.position[:] = self.M[:, i].copy()
 
-        for i, p in enumerate(self.graph.points):
+        for i, p in enumerate(self.graph.free_points):
             if p.position is None:
                 p.position = self.P[:, i].copy()
             else:
@@ -107,7 +107,7 @@ class LeastSquares(object):
 
     def optimize(self):
 
-        num_points = len(self.graph.points)
+        num_points = len(self.graph.free_points)
         point_dim = self.graph.point_dim
         num_landmarks = len(self.graph.landmarks)
         landmark_dim = self.graph.landmark_dim
@@ -138,7 +138,7 @@ class LeastSquares(object):
             else:
                 m.position[:] = self.M[:, i].copy()
 
-        for i, p in enumerate(self.graph.points):
+        for i, p in enumerate(self.graph.free_points):
             if p.position is None:
                 p.position = self.P[:, i].copy()
             else:
@@ -170,14 +170,14 @@ class Occam(object):
         if solver is not None:
             self._solver = solver
 
-        self._pre_optimizer = WeightedLeastSquares(graph, solver=solver)
+        self._pre_optimizer = WeightedLeastSquares(graph, solver=solver, verbosity=verbosity)
 
     def optimize(self):
 
         self._pre_optimizer.optimize()
         self._pre_optimizer.update()
 
-        points = self.graph.points
+        points = self.graph.free_points
         landmarks = self.graph.landmarks
 
         num_points = len(points)
@@ -219,7 +219,6 @@ class Occam(object):
 
         self.equivalence_pairs = [(landmarks[i], landmarks[j]) for (i, j) in E_.tolil().rows]
 
-
     def update(self):
 
         for i, m in enumerate(self.graph.landmarks):
@@ -228,7 +227,7 @@ class Occam(object):
             else:
                 m.position[:] = self.M[:, i].copy()
 
-        for i, p in enumerate(self.graph.points):
+        for i, p in enumerate(self.graph.free_points):
             if p.position is None:
                 p.position = self.P[:, i].copy()
             else:

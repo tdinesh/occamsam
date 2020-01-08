@@ -454,6 +454,39 @@ class TestObservationSystem(unittest.TestCase):
         self.assertEqual(0, Ap.shape[1])
         self.assertTrue(np.allclose(Am.dot(m), d))
 
+    def test_marginal_sequence(self):
+        num_points = 100
+        num_free_points = 15
+
+        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=253)
+        fg = factorgraph.GaussianFactorGraph(free_point_window=num_free_points)
+
+        num_partitions = 10
+        partition_indptr = np.linspace(0, 100, num_partitions + 1, dtype=np.int)
+
+        sim_landmarks = sim.landmark_variables
+        for i in range(num_partitions):
+
+            if i > 0:
+                sim.fix_points(list(range(partition_indptr[i-1], partition_indptr[i])))
+
+            for f in sim.factors((partition_indptr[i], partition_indptr[i+1])):
+                fg.add_factor(f)
+
+            Am, Ap, d, _ = fg.observation_system()
+
+            fg_landmarks = fg.landmarks
+            order = [sim_landmarks.index(k) for k in fg_landmarks]
+
+            m = np.ravel(sim.landmark_positions[order, :])
+            p = np.ravel(sim.point_positions[max(0, partition_indptr[i+1]-num_free_points):partition_indptr[i+1], :])
+
+            self.assertEqual(d.size, Am.shape[0])
+            self.assertEqual(d.size, Ap.shape[0])
+            self.assertEqual(m.size, Am.shape[1])
+            self.assertEqual(p.size, Ap.shape[1])
+            self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
+
 
 class TestOdometrySystem(unittest.TestCase):
 
@@ -742,6 +775,33 @@ class TestOdometrySystem(unittest.TestCase):
 
         self.assertEqual(b.size, A.shape[0])
         self.assertEqual(0, A.shape[1])
+
+
+    def test_marginal_sequence(self):
+        num_points = 100
+        num_free_points = 15
+
+        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=253)
+        fg = factorgraph.GaussianFactorGraph(free_point_window=num_free_points)
+
+        num_partitions = 10
+        partition_indptr = np.linspace(0, 100, num_partitions + 1, dtype=np.int)
+
+        for i in range(num_partitions):
+
+            if i > 0:
+                sim.fix_points(list(range(partition_indptr[i-1], partition_indptr[i])))
+
+            for f in sim.factors((partition_indptr[i], partition_indptr[i+1])):
+                fg.add_factor(f)
+
+            Bp, t, _ = fg.odometry_system()
+
+            p = np.ravel(sim.point_positions[max(0, partition_indptr[i+1]-num_free_points):partition_indptr[i+1], :])
+
+            self.assertEqual(t.size, Bp.shape[0])
+            self.assertEqual(p.size, Bp.shape[1])
+            self.assertTrue(np.allclose(Bp.dot(p), t))
 
 
 class TestMerge(unittest.TestCase):
