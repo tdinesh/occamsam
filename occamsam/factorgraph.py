@@ -121,8 +121,8 @@ class GaussianFactorGraph(object):
         """
 
         assert isinstance(landmark, LandmarkVariable), "Expected type LandmarkVariable, got %s instead" % type(landmark)
-        self._landmark_buffer[landmark] = None
         self.correspondence_map.insert(landmark)
+        self._landmark_buffer[self.correspondence_map.find(landmark)] = None
 
     def _append_to_array_index(self, point, row, meas_type):
         """

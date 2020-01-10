@@ -897,15 +897,17 @@ class TestMerge(unittest.TestCase):
             self.assertTrue(np.allclose(Am.dot(m) + Ap.dot(p), d))
 
     def test_merge_sequence_with_marginalization(self):
-        num_points = 1000
+
+        num_points = 100
         num_free_points = 15
 
-        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=414)
+        # sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=414)
+        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=66)
         fg = factorgraph.GaussianFactorGraph(num_free_points)
 
         landmarks = sim.landmark_variables
 
-        num_partitions = 100
+        num_partitions = 10
         partition_indptr = np.linspace(0, num_points, num_partitions + 1, dtype=np.int)
 
         for i in range(num_partitions):

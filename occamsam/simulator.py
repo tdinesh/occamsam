@@ -144,7 +144,7 @@ class Simulation(object):
         i = 0
         j = 0
         init_factor = PriorFactor(self.point_variables[0], np.eye(self.point_dim),
-                                  self.point_variables[0].position.copy(), 1e-4 * np.ones(self.point_dim))
+                                  self.point_variables[0].position.copy(), 1e-6 * np.ones(self.point_dim))
         factor_list = []
         for pv in self.point_variables:
 

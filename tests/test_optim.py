@@ -1,10 +1,14 @@
 import unittest
 
 import numpy as np
+import scipy as sp
+import scipy.sparse
 
 import optim
 import factorgraph
 from simulator import new_simulation
+
+import matplotlib.pyplot as plt
 
 
 class TestLeastSquares(unittest.TestCase):
@@ -286,6 +290,7 @@ class TestWeightedLeastSquares(unittest.TestCase):
             self.assertTrue(np.linalg.norm(optimizer.res_t) ** 2 < len(optimizer.res_t) * 4 * odometry_noise ** 2)
             self.assertTrue(np.allclose(p, p_hat, atol=0.1))
 
+
 class TestOccam(unittest.TestCase):
 
     def test_no_noise1(self):
@@ -442,15 +447,11 @@ class TestOccam(unittest.TestCase):
             self.assertTrue(np.allclose(p, p_hat))
             self.assertTrue(np.allclose(m, m_hat))
 
-    def test_sequential2(self):
+    def test_sequential_no_noise(self):
 
-        num_points = 200
+        num_points = 1000
 
-        observation_noise = 0.01
-        odometry_noise = 0.02
-
-        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=66, observation_noise=observation_noise,
-                             odometry_noise=odometry_noise, noise_matrix='diag')
+        sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=66)
 
         num_partitions = 10
         # partition_indptr = np.sort(
@@ -459,6 +460,8 @@ class TestOccam(unittest.TestCase):
 
         fpw = int(np.max(partition_indptr[1:] - partition_indptr[:-1]) + 5)
         fg = factorgraph.GaussianFactorGraph(free_point_window=fpw)
+
+        landmarks = sim.landmark_variables
 
         optimizer = optim.Occam(fg)
         for i in range(num_partitions):
@@ -469,12 +472,22 @@ class TestOccam(unittest.TestCase):
             optimizer.optimize()
             optimizer.update()
 
+            unique_landmarks = fg.landmarks
+            unique_order = [sim.unique_index_map[landmarks.index(k)] for k in unique_landmarks]
+
+            sim_groups, _ = sim.equivalences((0, partition_indptr[i+1]))
+            fg_groups = set(frozenset(g) for g in fg.correspondence_map.set_map().values())
+            diff = sim_groups.symmetric_difference(fg_groups)
+            self.assertTrue(len(diff) == 0)
+
             p_hat = np.concatenate([p.position for p in fg.points])
+            m_hat = np.concatenate([m.position for m in fg.landmarks])
+
+            m = np.ravel(sim.unique_landmark_positions[unique_order, :])
             p = np.ravel(sim.point_positions[:partition_indptr[i + 1], :])
 
-            self.assertTrue(np.linalg.norm(optimizer.res_d) ** 2 < len(optimizer.res_d) * 4 * observation_noise ** 2)
-            self.assertTrue(np.linalg.norm(optimizer.res_t) ** 2 < len(optimizer.res_t) * 4 * odometry_noise ** 2)
             self.assertTrue(np.allclose(p, p_hat, atol=0.1))
+            self.assertTrue(np.allclose(m, m_hat))
 
 
 if __name__ == '__main__':

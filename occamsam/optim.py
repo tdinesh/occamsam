@@ -6,10 +6,17 @@ from cvxpy.atoms.affine.vec import vec
 import numpy as np
 import scipy as sp
 import scipy.sparse
-import scipy.sparse.linalg
 
 import equivalence
 from factorgraph import GaussianFactorGraph
+
+
+def _sanitized_noise_array(sigma):
+    sigma_ = sigma.copy()
+    zero_mask = np.isclose(sigma_, 0)
+    if np.any(zero_mask):
+        sigma_[zero_mask] = 1
+    return sigma_
 
 
 class WeightedLeastSquares(object):
@@ -46,9 +53,7 @@ class WeightedLeastSquares(object):
         Am, Ap, d, sigma_d = self.graph.observation_system()
         Bp, t, sigma_t = self.graph.odometry_system()
 
-        eps_d = 1e-3 if np.linalg.norm(sigma_d) < 1e-3 else 0
-        eps_t = 1e-3 if np.linalg.norm(sigma_t) < 1e-3 else 0
-        S_d, S_t = sp.sparse.diags(1 / (sigma_d + eps_d)), sp.sparse.diags(1 / (sigma_t + eps_t))
+        S_d, S_t = sp.sparse.diags(1 / _sanitized_noise_array(sigma_d)), sp.sparse.diags(1 / _sanitized_noise_array(sigma_t))
 
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
@@ -189,22 +194,20 @@ class Occam(object):
         Am, Ap, d, sigma_d = self.graph.observation_system()
         Bp, t, sigma_t = self.graph.odometry_system()
 
-        eps_d = 1e-3 if np.linalg.norm(sigma_d) < 1e-3 else 0
-        eps_t = 1e-3 if np.linalg.norm(sigma_t) < 1e-3 else 0
-        S_d, S_t = sp.sparse.diags(1 / (sigma_d + eps_d)), sp.sparse.diags(1 / (sigma_t + eps_t))
+        S_d, S_t = sp.sparse.diags(1 / _sanitized_noise_array(sigma_d)), sp.sparse.diags(1 / _sanitized_noise_array(sigma_t))
 
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
         objective = cp.Minimize(mixed_norm(W * E * M.T))
-        constraints = [norm((Am * vec(M)) + (Ap * vec(P)) - d) <= 2 * np.linalg.norm(sigma_d),
-                       norm((Bp * vec(P)) - t) <= 2 * np.linalg.norm(sigma_t)]
+        constraints = [norm((Am * vec(M)) + (Ap * vec(P)) - d) <= 2 * np.linalg.norm(sigma_d + 1e-6),
+                       norm((Bp * vec(P)) - t) <= 2 * np.linalg.norm(sigma_t + 1e-6)]
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=self._verbosity, solver=self._solver)
 
         E_ = E[np.abs(np.linalg.norm(E * M.value.T, axis=1)) < 0.001, :]
         objective = cp.Minimize(
             sum_squares(S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
-        constraints = [E_ * M.T == 0]
+        constraints = [E_ * M.T == 0] if E_.shape[0] > 0 else []
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=self._verbosity, solver=self._solver, warm_start=True)
 
