@@ -191,6 +191,14 @@ class Occam(object):
         landmark_dim = self.graph.landmark_dim
 
         E, W = equivalence.equivalence_matrix(landmarks, transforms=[equivalence.sum_mass, equivalence.exp_distance])
+        if E.shape[0] == 0:
+            self.M = self._pre_optimizer.M
+            self.P = self._pre_optimizer.P
+            self.res_d = self._pre_optimizer.res_d
+            self.res_t = self._pre_optimizer.res_t
+            self.equivalence_pairs = []
+            return
+
         Am, Ap, d, sigma_d = self.graph.observation_system()
         Bp, t, sigma_t = self.graph.odometry_system()
 
