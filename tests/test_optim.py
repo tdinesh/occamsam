@@ -453,7 +453,7 @@ class TestOccam(unittest.TestCase):
 
         sim = new_simulation(point_dim=3, landmark_dim=1, num_points=num_points, seed=66)
 
-        num_partitions = 10
+        num_partitions = 100
         # partition_indptr = np.sort(
         #     np.concatenate([[0], np.random.choice(sim.num_points, num_partitions - 1), [sim.num_points]]))
         partition_indptr = np.linspace(0, num_points, num_partitions + 1, dtype=np.int)
@@ -486,8 +486,8 @@ class TestOccam(unittest.TestCase):
             m = np.ravel(sim.unique_landmark_positions[unique_order, :])
             p = np.ravel(sim.point_positions[:partition_indptr[i + 1], :])
 
-            self.assertTrue(np.allclose(p, p_hat, atol=0.1))
-            self.assertTrue(np.allclose(m, m_hat))
+            self.assertTrue(np.allclose(p, p_hat, atol=1e-5))
+            self.assertTrue(np.allclose(m, m_hat, atol=1e-5))
 
 
 if __name__ == '__main__':

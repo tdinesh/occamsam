@@ -198,11 +198,15 @@ class Occam(object):
 
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
+
+        M.value = self._pre_optimizer.M
+        P.value = self._pre_optimizer.P
+
         objective = cp.Minimize(mixed_norm(W * E * M.T))
         constraints = [norm((Am * vec(M)) + (Ap * vec(P)) - d) <= 2 * np.linalg.norm(sigma_d + 1e-6),
                        norm((Bp * vec(P)) - t) <= 2 * np.linalg.norm(sigma_t + 1e-6)]
         problem = cp.Problem(objective, constraints)
-        problem.solve(verbose=self._verbosity, solver=self._solver)
+        problem.solve(verbose=self._verbosity, solver=self._solver, warm_start=True)
 
         E_ = E[np.abs(np.linalg.norm(E * M.value.T, axis=1)) < 0.001, :]
         objective = cp.Minimize(
