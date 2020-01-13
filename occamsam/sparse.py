@@ -17,7 +17,7 @@ class DBSRMatrix(object):
         In order to perform arithmetic operations, transform the instance to the SciPy BSR matrix class using to_bsr()
 
         For further information regarding the internal representation used in this class and the SciPy BSR matrix
-        classes, please see: https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.sparse.bsr_matrix.html
+        classes, please see: https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.bsr_matrix.html
         """
 
         self._indptr = [0]
