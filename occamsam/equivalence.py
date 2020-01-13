@@ -19,6 +19,32 @@ def sum_mass(mi, mj):
 
 
 def equivalence_matrix(landmarks, transforms=[identity]):
+    """
+    Supposing each LandmarkVariable in landmarks corresponds to a node in a graph, this function returns the set of edges
+        connecting pairs of plausibly equivalent LandmarkVariables in the form of a transposed incidence matrix, i.e.,
+        each row contains exactly two entries, 1 and -1, in the columns corresponding to suspected equivalent landmarks
+
+    A LandmarkVariable's column index in the incidence matrix corresponds to its index within the landmarks list
+
+    Provide transform functions (which accept a pair of landmarks as input and returns a weight as a result) in order
+        to weight the different equivalences based on size, appearance, pairwise distance, etc. Examples can be seen
+        above
+
+    Weight transforms are automatically composed via multiplication
+
+    Weights that approach zero have their corresponding rows in the incidence matrix removed
+
+    The exp_distance function is the most useful to compose with other transforms as it quickly washes out rows relating
+        landmarks that are obviously too far apart
+
+    Providing no other transforms besides identity results in all possible pairs being considered
+
+    :param landmarks: List of LandmarkVariables
+    :param transforms: List of function classes for weighting suspected equivalent landmark pairs
+    :return E: Incidence matrix of plausible equivalences
+    :return W: Diagonal weight matrix
+    """
+
     index_pairs = []
     weights = []
     for (i, mi), (j, mj) in combinations(enumerate(landmarks), 2):
@@ -32,7 +58,7 @@ def equivalence_matrix(landmarks, transforms=[identity]):
     index_pairs = np.array(index_pairs)
     weights = np.array(weights)
 
-    zero_mask = np.logical_not(np.isclose(weights, np.zeros(len(weights))))
+    zero_mask = np.logical_not(np.isclose(weights, 0))
     index_pairs = index_pairs[zero_mask, :]
     weights = weights[zero_mask]
 

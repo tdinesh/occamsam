@@ -12,6 +12,13 @@ from factorgraph import GaussianFactorGraph
 
 
 def _sanitized_noise_array(sigma):
+    """
+    Replaces zero-noise estimates with 1 to maintain a achieve neutral weight within weighted least-squares
+
+    :param sigma: list of noise estimates for each measurement
+    :return sigma_: copy of sigma with 0 entries replaced by 1
+    """
+
     sigma_ = sigma.copy()
     zero_mask = np.isclose(sigma_, 0)
     if np.any(zero_mask):
@@ -22,16 +29,28 @@ def _sanitized_noise_array(sigma):
 class WeightedLeastSquares(object):
 
     def __init__(self, graph, solver=None, verbosity=False):
+        """
+        Weighted Least-Squares optimizer for the odometric and distance measurements contained in a GaussianFactorGraph
+
+        Weights for each measurement in the regression are defined as the inverse of the standard deviation for each.
+            If and when 0, the corresponding standard deviation is assumed to be 1.
+
+        graph instance is modified using the solution found by optimize() with each call to update()
+
+        :param graph: GaussianFactorGraph instance
+        :param solver: One of the supported CvxPy solvers, e.g. 'GUROBI' (default1), 'MOSEK' (default2), 'ECOS' (default3)
+        :param verbosity: Prints solver output to console if True
+        """
 
         assert isinstance(graph, GaussianFactorGraph), "Expected type GaussainFactorGraph for graph, got %s" % type(graph)
         self.graph = graph
 
-        self.M = None
-        self.P = None
-        self.res_d = None
-        self.res_t = None
+        self.M = None  # estimated landmark positions
+        self.P = None  # estimated robot positions
+        self.res_d = None  # distance measurement residuals for a given solution
+        self.res_t = None  # translation measurement residuals for a given solution
 
-        self._verbosity = verbosity
+        self._verbosity = verbosity  # solver output printed to console when True
 
         if 'GUROBI' in cp.installed_solvers():
             self._solver = 'GUROBI'
@@ -89,16 +108,25 @@ class WeightedLeastSquares(object):
 class LeastSquares(object):
 
     def __init__(self, graph, solver=None, verbosity=False):
+        """
+        Ordinary Least-Squares optimizer for the odometric and distance measurements contained in a GaussianFactorGraph
+
+        graph instance is modified using the solution found by optimize() with each call to update()
+
+        :param graph: GaussianFactorGraph instance
+        :param solver: One of the supported CvxPy solvers, e.g. 'GUROBI' (default1), 'MOSEK' (default2), 'ECOS' (default3)
+        :param verbosity: Prints solver output to console if True
+        """
 
         assert isinstance(graph, GaussianFactorGraph), "Expected type GaussainFactorGraph for graph, got %s" % type(graph)
         self.graph = graph
 
-        self.M = None
-        self.P = None
-        self.res_d = None
-        self.res_t = None
+        self.M = None  # estimated landmark positions
+        self.P = None  # estimated robot positions
+        self.res_d = None  # distance measurement residuals for a given solution
+        self.res_t = None  # translation measurement residuals for a given solution
 
-        self._verbosity = verbosity
+        self._verbosity = verbosity  # solver output printed to console when True
 
         if 'GUROBI' in cp.installed_solvers():
             self._solver = 'GUROBI'
@@ -153,17 +181,31 @@ class LeastSquares(object):
 class Occam(object):
 
     def __init__(self, graph, solver=None, verbosity=False):
+        """
+        Occam Smoothing-And-Mapping optimizer for the odometric and distance factors contained in a GaussianFactorGraph
+
+        Corresponding paper explaining the procedure can be found here:
+
+        Landmark associations are uncovered automatically and stored in equivalence_pairs between calls to optimize()
+
+        graph instance is modified using the solution found by optimize() with each call to update()
+
+        :param graph: GaussianFactorGraph instance
+        :param solver: One of the supported CvxPy solvers, e.g. 'GUROBI' (default1), 'MOSEK' (default2), 'ECOS' (default3)
+        :param verbosity: Prints solver output to console if True
+        """
 
         assert isinstance(graph, GaussianFactorGraph), "Expected type GaussainFactorGraph for graph, got %s" % type(graph)
         self.graph = graph
 
-        self.M = None
-        self.P = None
-        self.equivalence_pairs = []
-        self.res_d = None
-        self.res_t = None
+        self.M = None  # estimated landmark positions
+        self.P = None  # estimated robot positions
+        self.res_d = None  # distance measurement residuals for a given solution
+        self.res_t = None  # translation measurement residuals for a given solution
 
-        self._verbosity = verbosity
+        self.equivalence_pairs = []  # equivalent LandmarkVariable pairs
+
+        self._verbosity = verbosity  # solver output printed to console when True
 
         if 'GUROBI' in cp.installed_solvers():
             self._solver = 'GUROBI'

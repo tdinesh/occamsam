@@ -13,43 +13,75 @@ from utilities import UnionFind
 class GaussianFactorGraph(object):
 
     def __init__(self, free_point_window=None):
+        """
+        A class for dynamically maintaining a set of linear motion and observation measurements with Gaussian noise
+            collected over the course of robot navigation
+
+        While the name of the class suggests graph-like functionality, which is to be added in the future, its primary
+            purpose is to maintain a set of linear systems constraining robot and observation positions
+
+        By defining a free_point_window, the class will automatically only maintain measurement factors containing
+            at least one of the last free_point_window number of robot point positions as free variables in the
+            linear systems. Those points which eventually become too old are automatically marginalized using their
+            last known position
+
+        :param free_point_window: An integer declaring the number of most recent robot point positions, which are
+            included as free variables in the linear system(s)
+        """
 
         if free_point_window is None:
             self._free_point_window = sys.maxsize
         else:
             self._free_point_window = free_point_window
 
-        self.point_dim = None
-        self._points = OrderedDict()
-        self._free_point_buffer = OrderedDict()  # map of point variables to their associated column in A and B
-        self._Ap = DBSRMatrix()
-        self._Bp = DBSRMatrix()
+        self.point_dim = None  # Dimensionality of the point variables, which is detected and then enforced
+        #   following the first point variable encounter
+        self._points = OrderedDict()  # Collection of all point variables encountered
+        self._free_point_buffer = OrderedDict()  # Collection of the last free_point_window point variables. The
+        #   index of each PointVariable in the buffer corresponds to its
+        #   column index within _Ap and _Bp.
+        #   if free_point_window is None, _free_point_buffer == _points.
 
-        self.landmark_dim = None
-        self._landmark_buffer = OrderedDict()  # map of landmark variables to their associated column in H
-        self._Am = DBSRMatrix()
+        self.landmark_dim = None  # Dimensionality of the landmark variables, detected and then enforced following the
+        #   first encounter
+        self._landmark_buffer = OrderedDict()  # Collection of all the unique landmark variables encountered. The index
+        #   of each LandmarkVariable in the buffer corresponds to its column
+        #   index within _Am
 
-        self._array_index = {'d': {}, 't': {}}  # map of point variables to rows in which they participate in a factor
-        self._d = []
-        self._t = []
-        self._sigma_d = []
-        self._sigma_t = []
+        self._Ap = DBSRMatrix()  # Observation matrix transforming robot point positions
+        self._Am = DBSRMatrix()  # Observation matrix transforming landmark positions
 
-        self.correspondence_map = UnionFind()
+        self._Bp = DBSRMatrix()  # Odometry matrix relating robot point positions
+
+        self._array_index = {'d': {}, 't': {}}  # Map of variables to the rows in which they participate in a factor
+        self._d = []  # List of range measurements from a robot point to a landmark
+        self._t = []  # List of robot translations
+        self._sigma_d = []  # List of estimated standard deviations for each range measurement
+        self._sigma_t = []  # List of estimated standard deviations for each translation measurement
+
+        self.correspondence_map = UnionFind()  # Map of landmarks to their parent landmark. Landmarks sharing the same
+        #   parent form their own group. Associated landmarks share a single
+        #   column within the linear systems
 
     def add_factor(self, f):
         """
-        Adds a LinearFactor as an edge in our factor graph
+        Adds a new measurement factor to the system.
 
-        :param f: OdometryFactor or ObservationFactor to append to the sparse system
+        If the length of the _free_point_buffer equals the number free_point_window and the factor f contains a new
+            PointVariable, the oldest PointVariable in the _free_point_buffer is evicted and marginalized out of both
+            the Observation and Odometry linear systems using its last known position
+
+        :param f: PriorFactor, OdometryFactor, or ObservationFactor to be added
         """
+
         assert (isinstance(f, (PriorFactor, LinearFactor))), "Expected Factor type, got %s" % type(f)
 
         if isinstance(f, OdometryFactor):
 
             if self.point_dim is None:
                 self.point_dim = f.tail.dim
-            assert (self.point_dim == f.head.dim), "Expected head of dimension %d, got %d" % (self.point_dim, f.head.dim)
+            assert (self.point_dim == f.head.dim), "Expected head of dimension %d, got %d" % (
+                self.point_dim, f.head.dim)
 
             row = len(self._t)
             self._append_to_free_buffer(f.tail)
@@ -67,16 +99,19 @@ class GaussianFactorGraph(object):
 
             if self.point_dim is None:
                 self.point_dim = f.tail.dim
-            assert (self.point_dim == f.tail.dim), "Expected point of dimension %d, got %d" % (self.point_dim, f.tail.dim)
+            assert (self.point_dim == f.tail.dim), "Expected point of dimension %d, got %d" % (
+                self.point_dim, f.tail.dim)
             if self.landmark_dim is None:
                 self.landmark_dim = f.head.dim
-            assert (self.landmark_dim == f.head.dim), "Expected landmark of dimension %d, got %d" % (self.landmark_dim, f.head.dim)
+            assert (self.landmark_dim == f.head.dim), "Expected landmark of dimension %d, got %d" % (
+                self.landmark_dim, f.head.dim)
 
             self._append_to_landmark_buffer(f.head)
             self._append_to_free_buffer(f.tail)
             self._append_to_array_index(f.tail, len(self._d), 'd')
 
-            self._Am.append_row(list(self._landmark_buffer.keys()).index(self.correspondence_map.find(f.head)), f.A1.copy())
+            self._Am.append_row(list(self._landmark_buffer.keys()).index(self.correspondence_map.find(f.head)),
+                                f.A1.copy())
             self._Ap.append_row(list(self._free_point_buffer.keys()).index(f.tail), -f.A2.copy())
             self._d.append(f.b.copy())
             self._sigma_d.append(f.sigma)
@@ -86,7 +121,8 @@ class GaussianFactorGraph(object):
             if isinstance(f.var, PointVariable):
                 if self.point_dim is None:
                     self.point_dim = f.var.dim
-                assert (self.point_dim == f.var.dim), "Expected point of dimension %d, got %d" % (self.point_dim, f.var.dim)
+                assert (self.point_dim == f.var.dim), "Expected point of dimension %d, got %d" % (
+                    self.point_dim, f.var.dim)
                 self._append_to_free_buffer(f.var)
                 self._append_to_array_index(f.var, len(self._t), 't')
                 self._Bp.append_row(list(self._free_point_buffer.keys()).index(f.var), f.A)
@@ -102,10 +138,9 @@ class GaussianFactorGraph(object):
 
     def _append_to_free_buffer(self, point):
         """
-        Appends the point variable point to the buffer of free points, which are all the point variables whose positions
-        are yet unknown and will be optimized over
+        Appends the PointVariable point to the buffer of free points and points
 
-        :param point: point variable
+        :param point: PointVariable
         """
 
         assert isinstance(point, PointVariable), "Expected type PointVariable, got %s instead" % type(point)
@@ -114,10 +149,11 @@ class GaussianFactorGraph(object):
 
     def _append_to_landmark_buffer(self, landmark):
         """
-        Appends the landmark variable point to a buffer, where a landmarks position in the buffer corresponds to its index
-        in the H matrix
+        Appends the LandmarkVariable landmark to the landmark buffer
 
-        :param landmark: landmark variable
+        The LandmarkVariable is also added the correspondence map as its own parent and group
+
+        :param landmark: LandmarkVariable
         """
 
         assert isinstance(landmark, LandmarkVariable), "Expected type LandmarkVariable, got %s instead" % type(landmark)
@@ -126,7 +162,7 @@ class GaussianFactorGraph(object):
 
     def _append_to_array_index(self, point, row, meas_type):
         """
-        Appends row to the list of row factors in which the point variable participates in.
+        Appends point to the list of row factors in which the point variable participates in.
 
         Separate lists are maintained for translation and distance measurements
 
@@ -142,12 +178,12 @@ class GaussianFactorGraph(object):
 
     def _maintain_buffers(self):
         """
-        Maintains the free point buffer by evicting old point variables if the number of elements exceeds max_free_points
+        Maintains the _free_point_buffer by evicting old PointVariables if the number of elements exceeds
+            the number specified by free_point_window
 
-        Evicted point variables are marginalized out of both measurement matrices using their last known position
+        Evicted PointVariables are marginalized out of both measurement matrices using their last known position
 
         If the variable's position is still None, the point is kept in the free buffer until it is set
-
         """
 
         num_free = len(self._free_point_buffer)
@@ -163,12 +199,12 @@ class GaussianFactorGraph(object):
 
     def _marginalize(self, point, col):
         """
-        Marginalizes the point variable point in column col out of both the odometry and observation system
+        Marginalizes the PointVariable point located in column col out of both _Ap and _Bp
 
-        (A, -A') * (p, p')^T = b ==> A * p = b - (-A' * p')
+            (A, -A') * (p, p')^T = b ==> A * p = b - (-A' * p')
 
-        :param point: point variable to marginalize
-        :param col: column index corresponding to the point variable
+        :param point: PointVariable to marginalize
+        :param col: column index corresponding to point in _Ap and _Bp
         """
 
         for debug_iter, (A, b, array_index) in enumerate([(self._Ap, self._d, self._array_index['d']),
@@ -185,6 +221,15 @@ class GaussianFactorGraph(object):
             A.remove_col(col)
 
     def merge_landmarks(self, pairs):
+        """
+        Merges every pair of landmarks (LandmarkVariable u, LandmarkVariable v) in the list pairs
+
+        Groups of LandmarkVariables all sharing the same parent will share the same column within _Am after each call
+
+        Only the parent LandmarkVariable for each group remains in the _landmark_buffer after each call
+
+        :param pairs:
+        """
 
         for u, v in pairs:
             self.correspondence_map.union(u, v)
@@ -206,22 +251,27 @@ class GaussianFactorGraph(object):
 
     def observation_system(self):
         """
-        Returns the linear system of observation constraints on the landmark and pose variables
+        Returns the linear system of observation constraints between LandmarkVariables and PointVariables
             Am * m - Ap * p - d = 0
             A * (m, p)^T - d = 0
 
-        If a free_point_window is specified in the class, we marginalize over the first [1, ... , |p| - free_point_window]
-        point variables,
+        If a free_point_window is specified in the class, the first [1, ... , |p| - free_point_window] PointVariables
+            encountered are marginalized over:
+
             Am * m - Ap' * p' - (Af * p'' + d') = 0
             Am * m - Ap' * p' - d = 0
             A * (m, p')^T - d = 0
 
-        If the free_point_window is larger than |p|, all points will be free
+        If the free_point_window is larger than |p|, all PointVariables will have a corresponding column
+            within the linear system
 
-        If less than (|p| - free_point_window) point variables have known positions, all those that do will be marginalized over
+        If less than (|p| - free_point_window) PointVariables have known positions, all those that do will
+            be marginalized over
 
-        :return: A: Set of linear observation constraints
-        :return: d: Array of distance measurements
+        :return: Am: Matrix transforming landmark positions to the constraint space
+        :return: Ap: Matrix transforming robot point positions to the constraint space
+        :return: d: Array of corresponding distance measurements for each row
+        :return: sigma_d: Array of corresponding noise estimates for each row
         """
 
         Am = self._Am.to_bsr()
@@ -242,20 +292,24 @@ class GaussianFactorGraph(object):
 
     def odometry_system(self):
         """
-        Returns the linear system of odometry constraints on the pose variables
+        Returns the linear system of translational odometric constraints between consecutive PointVariables
             Ap * p - t = 0
 
-        If a free_point_window is specified in the class, we marginalize over the first [1, ... , |p| - free_point_window]
-        point variables,
+        If a free_point_window is specified in the class, the first [1, ... , |p| - free_point_window] PointVariables
+            encountered are marginalized over:
+
             Ap' * p' - (Af * p'' + t') = 0
             A * p' - t = 0
 
-        If the free_point_window is larger than |p|, all points will be free
+        If the free_point_window is larger than |p|, all PointVariables will have a corresponding column
+            within the linear system
 
-        If less than (|p| - free_point_window) point variables have known positions, all those that do will be marginalized over
+        If less than (|p| - free_point_window) PointVariables have known positions, all those that do will
+            be marginalized over
 
-        :return: A: Set of linear odometry constraints
-        :return: t: Array of translation measurements
+        :return: Bp: Matrix whose rows constrain the position of consecutive PointVariables
+        :return: t: Array of corresponding translation measurements for each row
+        :return: sigma_d: Array of corresponding noise estimates for each row
         """
 
         Bp = self._Bp.to_bsr().tocsr()
@@ -275,5 +329,3 @@ class GaussianFactorGraph(object):
     @property
     def landmarks(self):
         return list(self._landmark_buffer.keys())
-
-

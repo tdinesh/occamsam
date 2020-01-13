@@ -7,6 +7,19 @@ import itertools
 class DBSRMatrix(object):
 
     def __init__(self):
+        """
+        The Dynamic Block Sparse Row (DBSR) matrix class is designed for fast online management of block elements
+            and fast conversion to the SciPy sparse Block Sparse Row (BSR) matrix class
+
+        In particular, this class is meant to support fast appending of new rows and block replacement without having
+            to recopy the data contained therein
+
+        In order to perform arithmetic operations, transform the instance to the SciPy BSR matrix class using to_bsr()
+
+        For further information regarding the internal representation used in this class and the SciPy BSR matrix
+        classes, please see: https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.sparse.bsr_matrix.html
+        """
+
         self._indptr = [0]
         self._indices = []
         self._data = []

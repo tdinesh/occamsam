@@ -6,6 +6,12 @@ import numpy as np
 class UnionFind(object):
 
     def __init__(self):
+        """
+        Union-Find data structure implementation with path compression and union-by-rank.
+
+        For further information, please see: https://en.wikipedia.org/wiki/Disjoint-set_data_structure
+        """
+
         self._parent = {}
         self._rank = {}
 
