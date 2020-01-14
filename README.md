@@ -60,7 +60,10 @@ fg = GaussianFactorGraph(free_point_window=n)
 ```
 In an online setting, doing so can help increase performance by bounding complexity. 
 
-Factors (and the variables they contain) are added to the factor graph using the `add_factor()` method.
+Factors (and the variables they contain) are added to the factor graph using the `add_factor()` method,
+```markdown
+fg.add_factor(f)
+```
 
 ### Optimization
 
