@@ -86,12 +86,10 @@ class ObservationFactor(LinearFactor):
         Observation factors are linear Gaussian factors between position and landmark variables
             exp^(|| m  -  R * p  - d ||^2)
 
-        Note that the transformation R can be provided by using a compass module in tandem with a feature extractor.
-
         :param point: PointVariable at which the landmark is observed
         :param landmark: LandmarkVariable which is observed
         :param R: Coordinate frame of the landmark w.r.t. to the position
-        :param d: Distance between the position and the closest point of the landmark
+        :param d: Range measurement from the point position to the closest point of the landmark
         :param sigma: Observation noise
         """
 
