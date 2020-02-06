@@ -6,12 +6,39 @@ import scipy.sparse
 
 import optim
 import factorgraph
+import factor
 from simulator import new_simulation
 
 import matplotlib.pyplot as plt
 
 
 class TestLeastSquares(unittest.TestCase):
+
+    def test_no_measurements(self):
+
+        fg = factorgraph.GaussianFactorGraph()
+
+        optimizer = optim.LeastSquares(fg)
+        optimizer.optimize()
+        optimizer.update()
+
+    def test_odom_only(self):
+
+        sim = new_simulation(point_dim=3, landmark_dim=1, seed=1248, observation_noise=0.0, odometry_noise=0.0)
+        fg = factorgraph.GaussianFactorGraph()
+        for f in sim.factors():
+            if isinstance(f, factor.ObservationFactor):
+                continue
+            fg.add_factor(f)
+
+        optimizer = optim.LeastSquares(fg)
+        optimizer.optimize()
+        optimizer.update()
+
+        p_hat = np.concatenate([p.position for p in fg.points])
+        p = np.ravel(sim.point_positions)
+
+        self.assertTrue(np.allclose(p, p_hat, atol=1e-3))
 
     def test_no_noise1(self):
 
@@ -20,7 +47,7 @@ class TestLeastSquares(unittest.TestCase):
         for f in sim.factors():
             fg.add_factor(f)
 
-        optimizer = optim.LeastSquares(fg, verbosity=True)
+        optimizer = optim.LeastSquares(fg)
         optimizer.optimize()
         optimizer.update()
 

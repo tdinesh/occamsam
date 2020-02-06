@@ -121,10 +121,10 @@ class LeastSquares(object):
         assert isinstance(graph, GaussianFactorGraph), "Expected type GaussainFactorGraph for graph, got %s" % type(graph)
         self.graph = graph
 
-        self.M = None  # estimated landmark positions
-        self.P = None  # estimated robot positions
-        self.res_d = None  # distance measurement residuals for a given solution
-        self.res_t = None  # translation measurement residuals for a given solution
+        self.M = []  # estimated landmark positions
+        self.P = []  # estimated robot positions
+        self.res_d = []  # distance measurement residuals for a given solution
+        self.res_t = []  # translation measurement residuals for a given solution
 
         self._verbosity = verbosity  # solver output printed to console when True
 
@@ -148,20 +148,41 @@ class LeastSquares(object):
         Am, Ap, d, _ = self.graph.observation_system()
         Bp, t, _ = self.graph.odometry_system()
 
-        M = cp.Variable((landmark_dim, num_landmarks))
-        P = cp.Variable((point_dim, num_points))
-        objective = cp.Minimize(sum_squares(Am * vec(M) + Ap * vec(P) - d) + sum_squares(Bp * vec(P) - t))
-        problem = cp.Problem(objective)
-        problem.solve(verbose=self._verbosity, solver=self._solver)
+        if (num_points != 0) and (num_landmarks != 0):
 
-        self.M = M.value
-        self.P = P.value
+            M = cp.Variable((landmark_dim, num_landmarks))
+            P = cp.Variable((point_dim, num_points))
+            objective = cp.Minimize(sum_squares(Am * vec(M) + Ap * vec(P) - d) + sum_squares(Bp * vec(P) - t))
 
-        m = self.M.ravel(order='F')
-        p = self.P.ravel(order='F')
+            problem = cp.Problem(objective)
+            problem.solve(verbose=self._verbosity, solver=self._solver)
 
-        self.res_d = Am.dot(m) + Ap.dot(p) - d
-        self.res_t = Bp.dot(p) - t
+            self.M = M.value
+            self.P = P.value
+
+            m = self.M.ravel(order='F')
+            p = self.P.ravel(order='F')
+
+            self.res_d = Am.dot(m) + Ap.dot(p) - d
+            self.res_t = Bp.dot(p) - t
+
+        elif (num_points != 0) and (num_landmarks == 0):
+
+            P = cp.Variable((point_dim, num_points))
+            objective = cp.Minimize(sum_squares(Bp * vec(P) - t))
+
+            problem = cp.Problem(objective)
+            problem.solve(verbose=self._verbosity, solver=self._solver)
+
+            self.P = P.value
+
+            p = self.P.ravel(order='F')
+
+            self.res_t = Bp.dot(p) - t
+
+        else:
+            return
+
 
     def update(self):
 
