@@ -58,6 +58,9 @@ def equivalence_matrix(landmarks, transforms=[identity]):
         index_pairs.append((i, j))
         weights.append(np.prod([t(mi, mj) for t in transforms]))
 
+    if len(index_pairs) == 0:
+        return sp.sparse.csr_matrix((0, 0)), sp.sparse.csr_matrix((0, 0))
+
     index_pairs = np.array(index_pairs)
     weights = np.array(weights)
 
