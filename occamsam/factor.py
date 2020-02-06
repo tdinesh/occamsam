@@ -3,7 +3,7 @@ import numpy as np
 
 class PriorFactor(object):
 
-    def __init__(self, var, A, b, sigma=0.0):
+    def __init__(self, var, A, b, sigma):
         """
         Initializes a prior Gaussian factor on a single variable as follows
             exp^(|| A * x - b ||^2)
@@ -16,6 +16,7 @@ class PriorFactor(object):
 
         assert (A.shape[0] == b.size), "Measurement not in transformation codomain"
         assert (A.shape[1] == var.dim), "Variable not in transformation domain"
+        assert (sigma.size == b.size), "Measurement and sigma must be the same dimension"
 
         self.var = var
         self.A = A
@@ -26,7 +27,7 @@ class PriorFactor(object):
 
 class LinearFactor(object):
 
-    def __init__(self, head, tail, A1, A2, b, sigma=0.0):
+    def __init__(self, head, tail, A1, A2, b, sigma):
         """
         Initializes a linear Gaussain factor between two variables, modeled as follows
             exp^(|| A1 * x1 - A2 * x2 - b ||^2)
@@ -43,6 +44,7 @@ class LinearFactor(object):
         assert (A2.shape[0] == b.size), "Measurement not in tail transformation codomain"
         assert (A1.shape[1] == head.dim), "Head Variable not in transformation domain"
         assert (A2.shape[1] == tail.dim), "Tail Variable not in transformation domain"
+        assert (sigma.size == b.size), "Measurement and sigma must be the same dimension"
 
         self.head = head
         self.tail = tail
@@ -56,7 +58,7 @@ class LinearFactor(object):
 
 class OdometryFactor(LinearFactor):
 
-    def __init__(self, start, end, R, t, sigma=0.0):
+    def __init__(self, start, end, R, t, sigma):
         """
         Odometry factors are linear Gaussian factors between pairs of position variables modeled as follows
             exp^(|| p2 - p1 - R*t ||^2)
@@ -81,7 +83,7 @@ class OdometryFactor(LinearFactor):
 
 class ObservationFactor(LinearFactor):
 
-    def __init__(self, point, landmark, R, d, sigma=0.0):
+    def __init__(self, point, landmark, R, d, sigma):
         """
         Observation factors are linear Gaussian factors between position and landmark variables
             exp^(|| m  -  R * p  - d ||^2)
