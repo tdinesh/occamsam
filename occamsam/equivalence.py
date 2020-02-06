@@ -45,6 +45,9 @@ def equivalence_matrix(landmarks, transforms=[identity]):
     :return W: Diagonal weight matrix
     """
 
+    if len(landmarks) == 0:
+        return sp.sparse.csr_matrix((0, 0)), sp.sparse.csr_matrix((0, 0))
+
     index_pairs = []
     weights = []
     for (i, mi), (j, mj) in combinations(enumerate(landmarks), 2):

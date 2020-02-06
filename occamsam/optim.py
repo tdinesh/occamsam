@@ -26,85 +26,6 @@ def _sanitized_noise_array(sigma):
     return sigma_
 
 
-class WeightedLeastSquares(object):
-
-    def __init__(self, graph, solver=None, verbosity=False):
-        """
-        Weighted Least-Squares optimizer for the odometric and distance measurements contained in a GaussianFactorGraph
-
-        Weights for each measurement in the regression are defined as the inverse of the standard deviation for each.
-            If and when 0, the corresponding standard deviation is assumed to be 1.
-
-        graph instance is modified using the solution found by optimize() with each call to update()
-
-        :param graph: GaussianFactorGraph instance
-        :param solver: One of the supported CvxPy solvers, e.g. 'GUROBI' (default1), 'MOSEK' (default2), 'ECOS' (default3)
-        :param verbosity: Prints solver output to console if True
-        """
-
-        assert isinstance(graph, GaussianFactorGraph), "Expected type GaussainFactorGraph for graph, got %s" % type(graph)
-        self.graph = graph
-
-        self.M = None  # estimated landmark positions
-        self.P = None  # estimated robot positions
-        self.res_d = None  # distance measurement residuals for a given solution
-        self.res_t = None  # translation measurement residuals for a given solution
-
-        self._verbosity = verbosity  # solver output printed to console when True
-
-        if 'GUROBI' in cp.installed_solvers():
-            self._solver = 'GUROBI'
-        elif 'MOSEK' in cp.installed_solvers():
-            self._solver = 'MOSEK'
-        else:
-            self._solver = 'ECOS'
-
-        if solver is not None:
-            self._solver = solver
-
-    def optimize(self):
-
-        num_points = len(self.graph.free_points)
-        point_dim = self.graph.point_dim
-        num_landmarks = len(self.graph.landmarks)
-        landmark_dim = self.graph.landmark_dim
-
-        Am, Ap, d, sigma_d = self.graph.observation_system()
-        Bp, t, sigma_t = self.graph.odometry_system()
-
-        S_d, S_t = sp.sparse.diags(1 / _sanitized_noise_array(sigma_d)), sp.sparse.diags(1 / _sanitized_noise_array(sigma_t))
-
-        M = cp.Variable((landmark_dim, num_landmarks))
-        P = cp.Variable((point_dim, num_points))
-        objective = cp.Minimize(
-            sum_squares(S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
-        problem = cp.Problem(objective)
-        problem.solve(verbose=self._verbosity, solver=self._solver)
-
-        self.M = M.value
-        self.P = P.value
-
-        m = self.M.ravel(order='F')
-        p = self.P.ravel(order='F')
-
-        self.res_d = Am.dot(m) + Ap.dot(p) - d
-        self.res_t = Bp.dot(p) - t
-
-    def update(self):
-
-        for i, m in enumerate(self.graph.landmarks):
-            if m.position is None:
-                m.position = self.M[:, i].copy()
-            else:
-                m.position[:] = self.M[:, i].copy()
-
-        for i, p in enumerate(self.graph.free_points):
-            if p.position is None:
-                p.position = self.P[:, i].copy()
-            else:
-                p.position[:] = self.P[:, i].copy()
-
-
 class LeastSquares(object):
 
     def __init__(self, graph, solver=None, verbosity=False):
@@ -183,6 +104,104 @@ class LeastSquares(object):
         else:
             return
 
+
+    def update(self):
+
+        for i, m in enumerate(self.graph.landmarks):
+            if m.position is None:
+                m.position = self.M[:, i].copy()
+            else:
+                m.position[:] = self.M[:, i].copy()
+
+        for i, p in enumerate(self.graph.free_points):
+            if p.position is None:
+                p.position = self.P[:, i].copy()
+            else:
+                p.position[:] = self.P[:, i].copy()
+
+
+class WeightedLeastSquares(object):
+
+    def __init__(self, graph, solver=None, verbosity=False):
+        """
+        Weighted Least-Squares optimizer for the odometric and distance measurements contained in a GaussianFactorGraph
+
+        Weights for each measurement in the regression are defined as the inverse of the standard deviation for each.
+            If and when 0, the corresponding standard deviation is assumed to be 1.
+
+        graph instance is modified using the solution found by optimize() with each call to update()
+
+        :param graph: GaussianFactorGraph instance
+        :param solver: One of the supported CvxPy solvers, e.g. 'GUROBI' (default1), 'MOSEK' (default2), 'ECOS' (default3)
+        :param verbosity: Prints solver output to console if True
+        """
+
+        assert isinstance(graph, GaussianFactorGraph), "Expected type GaussainFactorGraph for graph, got %s" % type(graph)
+        self.graph = graph
+
+        self.M = None  # estimated landmark positions
+        self.P = None  # estimated robot positions
+        self.res_d = None  # distance measurement residuals for a given solution
+        self.res_t = None  # translation measurement residuals for a given solution
+
+        self._verbosity = verbosity  # solver output printed to console when True
+
+        if 'GUROBI' in cp.installed_solvers():
+            self._solver = 'GUROBI'
+        elif 'MOSEK' in cp.installed_solvers():
+            self._solver = 'MOSEK'
+        else:
+            self._solver = 'ECOS'
+
+        if solver is not None:
+            self._solver = solver
+
+    def optimize(self):
+
+        num_points = len(self.graph.free_points)
+        point_dim = self.graph.point_dim
+        num_landmarks = len(self.graph.landmarks)
+        landmark_dim = self.graph.landmark_dim
+
+        Am, Ap, d, sigma_d = self.graph.observation_system()
+        Bp, t, sigma_t = self.graph.odometry_system()
+
+        S_d, S_t = sp.sparse.diags(1 / _sanitized_noise_array(sigma_d)), sp.sparse.diags(1 / _sanitized_noise_array(sigma_t))
+
+        if (num_points != 0) and (num_landmarks != 0):
+
+            M = cp.Variable((landmark_dim, num_landmarks))
+            P = cp.Variable((point_dim, num_points))
+            objective = cp.Minimize(
+                sum_squares(S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
+            problem = cp.Problem(objective)
+            problem.solve(verbose=self._verbosity, solver=self._solver)
+
+            self.M = M.value
+            self.P = P.value
+
+            m = self.M.ravel(order='F')
+            p = self.P.ravel(order='F')
+
+            self.res_d = Am.dot(m) + Ap.dot(p) - d
+            self.res_t = Bp.dot(p) - t
+
+        elif (num_points != 0) and (num_landmarks == 0):
+
+            P = cp.Variable((point_dim, num_points))
+            objective = cp.Minimize(
+                sum_squares(sum_squares(S_t * ((Bp * vec(P)) - t))))
+            problem = cp.Problem(objective)
+            problem.solve(verbose=self._verbosity, solver=self._solver)
+
+            self.P = P.value
+
+            p = self.P.ravel(order='F')
+
+            self.res_t = Bp.dot(p) - t
+
+        else:
+            return
 
     def update(self):
 
