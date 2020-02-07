@@ -220,7 +220,7 @@ class WeightedLeastSquares(object):
 
 class Occam(object):
 
-    def __init__(self, graph, solver=None, verbosity=False):
+    def __init__(self, graph, assoc_range=1, solver=None, verbosity=False):
         """
         Occam Smoothing-And-Mapping optimizer for the odometric and distance factors contained in a GaussianFactorGraph
 
@@ -231,6 +231,7 @@ class Occam(object):
         graph instance is modified using the solution found by optimize() with each call to update()
 
         :param graph: GaussianFactorGraph instance
+        :param assoc_range: Standard deviation (distance) between pairs of observations to the same landmark
         :param solver: One of the supported CvxPy solvers, e.g. 'GUROBI' (default1), 'MOSEK' (default2), 'ECOS' (default3)
         :param verbosity: Prints solver output to console if True
         """
@@ -244,6 +245,8 @@ class Occam(object):
         self.res_t = None  # translation measurement residuals for a given solution
 
         self.equivalence_pairs = []  # equivalent LandmarkVariable pairs
+
+        self._sigma = assoc_range
 
         self._verbosity = verbosity  # solver output printed to console when True
 
@@ -272,7 +275,7 @@ class Occam(object):
         num_landmarks = len(landmarks)
         landmark_dim = self.graph.landmark_dim
 
-        transforms = [equivalence.SumMass(self.graph.correspondence_map.set_map()), equivalence.ExpDistance(1)]
+        transforms = [equivalence.SumMass(self.graph.correspondence_map.set_map()), equivalence.ExpDistance(self._sigma)]
         E, W = equivalence.equivalence_matrix(landmarks, transforms=transforms)
         if E.shape[0] == 0:
             self.M = self._pre_optimizer.M
