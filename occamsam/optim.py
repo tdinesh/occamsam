@@ -299,6 +299,14 @@ class Occam(object):
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=self._verbosity, solver=self._solver, warm_start=True)
 
+        if problem.solution.status == 'infeasible':
+            self.M = self._pre_optimizer.M
+            self.P = self._pre_optimizer.P
+            self.res_d = self._pre_optimizer.res_d
+            self.res_t = self._pre_optimizer.res_t
+            self.equivalence_pairs = []
+            return
+
         E_ = E[np.abs(np.linalg.norm(E * M.value.T, axis=1)) < 0.001, :]
         objective = cp.Minimize(
             sum_squares(S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
