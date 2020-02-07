@@ -4,21 +4,34 @@ import scipy.sparse
 from itertools import combinations
 
 
-def identity(mi, mj):
-    return 1
+class Identity(object):
+
+    def __call__(self, mi, mj):
+        return 1
 
 
-def exp_distance(mi, mj):
-    sigma = 1
-    return np.exp(-(np.linalg.norm(mi.position - mj.position) ** 2 / (2 * (sigma ** 2)))) \
-        if np.linalg.norm(mi.position - mj.position) < 3 * sigma else 0
+class ExpDistance(object):
+
+    def __init__(self, sigma):
+        self._sigma = sigma
+
+    def __call__(self, mi, mj):
+        return np.exp(-(np.linalg.norm(mi.position - mj.position) ** 2 / (2 * (self._sigma ** 2)))) \
+            if np.linalg.norm(mi.position - mj.position) < 3 * self._sigma else 0
 
 
-def sum_mass(mi, mj):
-    return mi.mass + mj.mass
+class SumMass(object):
+
+    def __init__(self, group_map):
+        self._group_map = group_map
+
+    def __call__(self, mi, mj):
+        mi_mass = np.sum([k.mass for k in self._group_map[mi]])
+        mj_mass = np.sum([k.mass for k in self._group_map[mj]])
+        return mi_mass + mj_mass
 
 
-def equivalence_matrix(landmarks, transforms=[identity]):
+def equivalence_matrix(landmarks, transforms=[Identity()]):
     """
     Supposing each LandmarkVariable in landmarks corresponds to a node in a graph, this function returns the set of edges
         connecting pairs of plausibly equivalent LandmarkVariables in the form of a transposed incidence matrix, i.e.,
