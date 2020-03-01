@@ -275,7 +275,9 @@ class Occam(object):
         num_landmarks = len(landmarks)
         landmark_dim = self.graph.landmark_dim
 
-        transforms = [equivalence.SumMass(self.graph.correspondence_map.set_map()), equivalence.ExpDistance(self._sigma)]
+        transforms = [equivalence.SumMass(self.graph.correspondence_map.set_map()),
+                      equivalence.ExpDistance(self._sigma),
+                      equivalence.Facing()]
         E, W = equivalence.equivalence_matrix(landmarks, transforms=transforms)
         if E.shape[0] == 0:
             self.M = self._pre_optimizer.M
