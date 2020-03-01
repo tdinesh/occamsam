@@ -31,6 +31,15 @@ class SumMass(object):
         return mi_mass + mj_mass
 
 
+class Facing(object):
+
+    def __call__(self, mi, mj):
+        if mi.facing != mj.facing:
+            return 0
+        else:
+            return 1
+
+
 def equivalence_matrix(landmarks, transforms=[Identity()]):
     """
     Supposing each LandmarkVariable in landmarks corresponds to a node in a graph, this function returns the set of edges

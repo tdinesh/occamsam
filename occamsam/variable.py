@@ -42,3 +42,4 @@ class LandmarkVariable(Variable):
 
         self.class_label = class_label
         self.mass = mass
+        self.facing = 0
