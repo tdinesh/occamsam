@@ -134,7 +134,7 @@ class Simulation(object):
             self.landmark_variables[i].position = self.landmark_positions[i, :]
         return self
 
-    def factors(self, point_range=None):
+    def factors(self, point_range=None, max_observations=np.Inf):
 
         odometry_factors = [OdometryFactor(self.point_variables[u], self.point_variables[v], R, t, sigma)
                             for (u, v), R, t, sigma in zip(*self.odometry_measurements())]
@@ -157,9 +157,11 @@ class Simulation(object):
                 sync_factors.append(odometry_factors[i])
                 i += 1
 
-            while j < len(observation_factors) and pv == observation_factors[j].tail:
+            k = 0
+            while j < len(observation_factors) and pv == observation_factors[j].tail and k < max_observations:
                 sync_factors.append(observation_factors[j])
                 j += 1
+                k += 1
             factor_list.append(sync_factors)
 
         if point_range is not None:
