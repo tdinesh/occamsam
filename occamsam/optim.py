@@ -406,7 +406,6 @@ class EM(object):
 
             self.iter_counter += 1
 
-
     def update(self):
 
         for i, m in enumerate(self.graph.landmarks):
