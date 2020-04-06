@@ -31,7 +31,7 @@ if __name__ == '__main__':
     plt.scatter(em_time, em_error)
     plt.xscale('log')
     plt.title('Maximum Number of Measurements = 3')
-    plt.xlabel('Avg. Time to Convergence (s)')
+    plt.xlabel('Time to Convergence (s)')
     plt.ylabel('Mean Error')
     plt.legend(['OccamSAM', 'EM'])
     plt.show()
