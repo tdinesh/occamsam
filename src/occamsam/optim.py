@@ -7,9 +7,9 @@ import numpy as np
 import scipy as sp
 import scipy.sparse
 
-import equivalence
-import utilities
-from factorgraph import GaussianFactorGraph
+import occamsam.equivalence as equivalence
+import occamsam.utilities as utilities
+from occamsam.factorgraph import GaussianFactorGraph
 
 import itertools
 

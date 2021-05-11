@@ -4,9 +4,9 @@ import scipy.stats
 from collections import OrderedDict
 from itertools import chain
 
-from variable import PointVariable, LandmarkVariable
-from factor import OdometryFactor, ObservationFactor, PriorFactor
-from utilities import random_groups, sample_pairs, UnionFind
+from occamsam.variable import PointVariable, LandmarkVariable
+from occamsam.factor import OdometryFactor, ObservationFactor, PriorFactor
+from occamsam.utilities import random_groups, sample_pairs, UnionFind
 
 
 class Simulation(object):

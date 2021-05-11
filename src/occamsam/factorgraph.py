@@ -4,10 +4,10 @@ import scipy as sp
 import scipy.sparse
 from collections import OrderedDict
 
-from factor import LinearFactor, ObservationFactor, OdometryFactor, PriorFactor
-from variable import LandmarkVariable, PointVariable
-from sparse import DBSRMatrix
-from utilities import UnionFind
+from occamsam.factor import LinearFactor, ObservationFactor, OdometryFactor, PriorFactor
+from occamsam.variable import LandmarkVariable, PointVariable
+from occamsam.sparse import DBSRMatrix
+from occamsam.utilities import UnionFind
 
 
 class GaussianFactorGraph(object):

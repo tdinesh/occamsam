@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
 
-import factorgraph
-from simulator import new_simulation
+import occamsam.factorgraph as factorgraph
+from occamsam.simulator import new_simulation
 
 
 class TestObservationArray(unittest.TestCase):

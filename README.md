@@ -10,6 +10,10 @@ Note that OccamSAM **assumes that robot orientations are known and observable**.
 
 ## Usage
 
+To test and install
+
+pip3 install --install-option test .
+
 ### Creating new variables
 
 The first step in using this package is to instantiate new `Variable` types from the `variable.py` module for each
@@ -24,15 +28,15 @@ landmark = LandmarkVariable(1)
 
 ### Creating new factors
 
-Smoothing-And-Mapping (SAM) algorithms perform and optimization over variables constrained by various types of factors. 
+Smoothing-And-Mapping (SAM) algorithms perform and optimization over variables constrained by various types of factors.
 
 The `factor.py` module contains three different types of factors for defining constraints on variables
 1. `PriorFactor` : Anchors a single `PointVariable` to a specified location, typically used for initialization. At least one of these factors must
-    be provided in order to have a well-defined optimization problem. e.g., 
+    be provided in order to have a well-defined optimization problem. e.g.,
     ```markdown
     f = PriorFactor(point1, A, b)
     ```
-2. `OdometryFactor` : The vector translation measurement between consecutive pairs of `PointVariable`s. e.g., 
+2. `OdometryFactor` : The vector translation measurement between consecutive pairs of `PointVariable`s. e.g.,
     ```markdown
     f = OdometryFactor(point1, point2, R, t)
     ```
@@ -58,7 +62,7 @@ If you wish to only maintain a window of at most `n` `PointVariable`s for the op
 ```markdown
 fg = GaussianFactorGraph(free_point_window=n)
 ```
-In an online setting, doing so can help increase performance by bounding complexity. 
+In an online setting, doing so can help increase performance by bounding complexity.
 
 Factors (and the variables they contain) are added to the factor graph using the `add_factor()` method,
 ```markdown
@@ -67,7 +71,7 @@ fg.add_factor(f)
 
 ### Optimization
 
-The different optimization strategies for the linear SAM problem can be found in the `optim.py` module. 
+The different optimization strategies for the linear SAM problem can be found in the `optim.py` module.
 Two basic algorithms, `LeastSquares` and `WeightedLeastSquares`, are provided in addition to our main
 `Occam` algorithm we showcase here. Additional custom algorithms may be implemented by specifying
 an `optimize()` method for performing SAM inference and an `update()` method for updating the variable

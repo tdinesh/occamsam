@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 from itertools import chain
 
-from utilities import UnionFind, random_groups, sample_pairs
+from occamsam.utilities import UnionFind, random_groups, sample_pairs
 
 
 class TestUnionFind(unittest.TestCase):

@@ -2,9 +2,9 @@ import numpy as np
 
 import time
 
-import optim
-import factorgraph
-from simulator import new_simulation
+import occamsam.optim
+import occamsam.factorgraph
+from occamsam.simulator import new_simulation
 
 NUM_OBSERVATIONS = 4
 NUM_TRIALS = 40

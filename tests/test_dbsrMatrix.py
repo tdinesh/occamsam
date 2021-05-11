@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 import itertools
 
-from sparse import DBSRMatrix
+from occamsam.sparse import DBSRMatrix
 from scipy.sparse import bsr_matrix
 
 

@@ -4,9 +4,9 @@ import numpy as np
 import scipy as sp
 import scipy.sparse
 
-import optim
-import factorgraph
-from simulator import new_simulation
+import occamsam.optim as optim
+import occamsam.factorgraph as factorgraph
+from occamsam.simulator import new_simulation
 
 
 class TestLeastSquares(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestLeastSquares(unittest.TestCase):
 
     def test_odom_only(self):
 
-        import factor
+        import occamsam.factor as factor
 
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=1248, observation_noise=0.0, odometry_noise=0.0)
         fg = factorgraph.GaussianFactorGraph()
@@ -144,7 +144,7 @@ class TestWeightedLeastSquares(unittest.TestCase):
 
     def test_odom_only(self):
 
-        import factor
+        import occamsam.factor as factor
 
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=2084, observation_noise=0.0, odometry_noise=0.0)
         fg = factorgraph.GaussianFactorGraph()
@@ -357,7 +357,7 @@ class TestOccam(unittest.TestCase):
 
     def test_odom_only(self):
 
-        import factor
+        import occamsam.factor as factor
 
         sim = new_simulation(point_dim=3, landmark_dim=1, seed=1776, observation_noise=0.0, odometry_noise=0.0)
         fg = factorgraph.GaussianFactorGraph()
