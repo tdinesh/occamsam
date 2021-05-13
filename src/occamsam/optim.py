@@ -76,7 +76,7 @@ class LeastSquares(object):
 
             M = cp.Variable((landmark_dim, num_landmarks))
             P = cp.Variable((point_dim, num_points))
-            objective = cp.Minimize(sum_squares(Am * vec(M) + Ap * vec(P) - d) + sum_squares(Bp * vec(P) - t))
+            objective = cp.Minimize(sum_squares(Am @ vec(M) + Ap @ vec(P) - d) + sum_squares(Bp @ vec(P) - t))
 
             problem = cp.Problem(objective)
             problem.solve(verbose=self._verbosity, solver=self._solver)
@@ -93,7 +93,7 @@ class LeastSquares(object):
         elif (num_points != 0) and (num_landmarks == 0):
 
             P = cp.Variable((point_dim, num_points))
-            objective = cp.Minimize(sum_squares(Bp * vec(P) - t))
+            objective = cp.Minimize(sum_squares(Bp @ vec(P) - t))
 
             problem = cp.Problem(objective)
             problem.solve(verbose=self._verbosity, solver=self._solver)
@@ -176,7 +176,7 @@ class WeightedLeastSquares(object):
             M = cp.Variable((landmark_dim, num_landmarks))
             P = cp.Variable((point_dim, num_points))
             objective = cp.Minimize(
-                sum_squares(S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
+                sum_squares(S_d @ ((Am @ vec(M)) + (Ap @ vec(P)) - d)) + sum_squares(S_t @ ((Bp @ vec(P)) - t)))
             problem = cp.Problem(objective)
             problem.solve(verbose=self._verbosity, solver=self._solver)
 
@@ -193,7 +193,7 @@ class WeightedLeastSquares(object):
 
             P = cp.Variable((point_dim, num_points))
             objective = cp.Minimize(
-                sum_squares(sum_squares(S_t * ((Bp * vec(P)) - t))))
+                sum_squares(sum_squares(S_t @ ((Bp @ vec(P)) - t))))
             problem = cp.Problem(objective)
             problem.solve(verbose=self._verbosity, solver=self._solver)
 
@@ -301,9 +301,9 @@ class Occam(object):
         M.value = self._pre_optimizer.M
         P.value = self._pre_optimizer.P
 
-        objective = cp.Minimize(mixed_norm(W * E * M.T))
-        constraints = [norm((Am * vec(M)) + (Ap * vec(P)) - d) <= 2 * np.linalg.norm(sigma_d + 1e-6),
-                       norm((Bp * vec(P)) - t) <= 2 * np.linalg.norm(sigma_t + 1e-6)]
+        objective = cp.Minimize(mixed_norm(W @ E @ M.T))
+        constraints = [norm((Am @ vec(M)) + (Ap @ vec(P)) - d) <= 2 * np.linalg.norm(sigma_d + 1e-6),
+                       norm((Bp @ vec(P)) - t) <= 2 * np.linalg.norm(sigma_t + 1e-6)]
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=self._verbosity, solver=self._solver, warm_start=True)
 
@@ -317,8 +317,8 @@ class Occam(object):
 
         E_ = E[np.abs(np.linalg.norm(E * M.value.T, axis=1)) < 0.001, :]
         objective = cp.Minimize(
-            sum_squares(S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
-        constraints = [E_ * M.T == 0] if E_.shape[0] > 0 else []
+            sum_squares(S_d @ ((Am @ vec(M)) + (Ap @ vec(P)) - d)) + sum_squares(S_t @ ((Bp @ vec(P)) - t)))
+        constraints = [E_ @ M.T == 0] if E_.shape[0] > 0 else []
         problem = cp.Problem(objective, constraints)
         problem.solve(verbose=self._verbosity, solver=self._solver, warm_start=True)
 
@@ -498,7 +498,7 @@ class EM(object):
         M = cp.Variable((landmark_dim, num_landmarks))
         P = cp.Variable((point_dim, num_points))
         objective = cp.Minimize(
-            sum_squares(W * S_d * ((Am * vec(M)) + (Ap * vec(P)) - d)) + sum_squares(S_t * ((Bp * vec(P)) - t)))
+            sum_squares(W @ S_d @ ((Am @ vec(M)) + (Ap @ vec(P)) - d)) + sum_squares(S_t @ ((Bp @ vec(P)) - t)))
         problem = cp.Problem(objective)
         problem.solve(verbose=self._verbosity, solver=self._solver)
 

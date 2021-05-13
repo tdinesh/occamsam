@@ -10,9 +10,12 @@ Note that OccamSAM **assumes that robot orientations are known and observable**.
 
 ## Usage
 
+To install (cd to occamsam folder)
+`pip3 install .`
+
 To test and install
 
-pip3 install --install-option test .
+`pip3 install --install-option test .`
 
 ### Creating new variables
 
